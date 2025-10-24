@@ -1,4 +1,5 @@
 ﻿using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -6,54 +7,73 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Windows.Forms;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ChatRoom
 {
     public partial class STARTMENU : Form
     {
         //DECLARACION DE VARIABLES EXTRA -----------------------------------------------------------
-        Form f = null;
+        //Form f = null;
         private string connection = "server=127.0.0.1;uid=root;pwd=root;database=ChatRoom";
+        private ClientSocket cliente; 
 
         public STARTMENU()
         {
             InitializeComponent();
             this.DoubleBuffered = true;
+            cliente = new ClientSocket();
             
         }
 
-        public void Client(string text)
+        public class ClientSocket
         {
-            IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
-            IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11200);
+            private Socket socket;
 
-            try
+            public string EnviarLogin(string username, string password)
             {
-                Socket sender = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-                sender.Connect(remoteEP);
-
-                while (text != "exit")
+                if (socket == null || !socket.Connected)
                 {
-                    byte[] msg = Encoding.UTF8.GetBytes(text + "<EOF>");
-                    int bytesSent = sender.Send(msg);
-                    byte[] bytes = new byte[1024];
-                    int byteRec = sender.Receive(bytes);
-
-                    string texto = Encoding.UTF8.GetString(bytes, 0, byteRec);
-
-                    MessageBox.Show($"Respuesta del servidor: {texto}");
+                    Conectar();
                 }
 
-                sender.Shutdown(SocketShutdown.Both);
-                sender.Close();
+                string eventoLogin = $"LOGIN|{username}|{password}";
+                string respuesta = Client(eventoLogin);
+                MessageBox.Show(respuesta);
+                return respuesta;
 
             }
-            catch (Exception ex)
+            public string Client(string evento)
             {
-                MessageBox.Show($"Error: {ex.Message}");
+                byte[] msg = Encoding.UTF8.GetBytes(evento + "<EOF>");
+                int bytesSent = socket.Send(msg);
+
+                byte[] bytes = new byte[1024];
+                int byteRec = socket.Receive(bytes);
+
+                string texto = Encoding.UTF8.GetString(bytes, 0, byteRec);
+                return texto;
+            }
+
+            public void Conectar()
+            {
+                IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+                IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11200);
+
+                try
+                {
+                    socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+                    socket.Connect(remoteEP);
+
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error: {ex.Message}");
+                }
             }
         }
+        
 
         //DISEÑO -----------------------------------------------------------
         protected override void OnPaint(PaintEventArgs e)
@@ -148,30 +168,42 @@ namespace ChatRoom
         //salir del programa
         private void exitbutton_Click(object sender, EventArgs e)
         {
-            Application.Exit();
+            System.Windows.Forms.Application.Exit();
+
         }
         //Menu login ***************
         //iniciar sesion
         private void loginuserbutton_Click(object sender, EventArgs e)
         {
-            if (userlogin.Text == "123" && passwordlogin.Text == "123")
-            {
-                Form2 f = new Form2(this, 12345, "null");
-                f.Show();
-                this.Hide();
-                return;
-            }
-            
-            //Validación del usuario y su contraseña
-            //if (string.IsNullOrEmpty(userlogin.Text) || userlogin.Text == "Usuario" ||
-            //    string.IsNullOrEmpty(passwordlogin.Text) || passwordlogin.Text == "Contraseña")
+            //if (userlogin.Text == "123" && passwordlogin.Text == "123")
             //{
-            //    MessageBox.Show("Ingresa un usuario y contraseña");
+            //    Form2 f = new Form2(this, 12345, "null");
+            //    f.Show();
+            //    this.Hide();
             //    return;
             //}
 
-            
-            Client(userlogin.Text);
+            //Validación del usuario y su contraseña
+            if (string.IsNullOrEmpty(userlogin.Text) || userlogin.Text == "Usuario" ||
+                string.IsNullOrEmpty(passwordlogin.Text) || passwordlogin.Text == "Contraseña")
+            {
+                MessageBox.Show("Ingresa un usuario y contraseña");
+                return;
+            }
+
+            // Enviar login y recibir respuesta
+            string respuestaServidor = cliente.EnviarLogin(userlogin.Text, passwordlogin.Text);
+
+            MessageBox.Show($"El servidor respondió: {respuestaServidor}");
+
+            if (respuestaServidor.Contains("LOGIN_EXITOSO"))
+            {
+                MessageBox.Show("¡Login exitoso! (Aquí abrirías Form2)");
+            }
+            else if (respuestaServidor.Contains("LOGIN_ERROR"))
+            {
+                MessageBox.Show("❌ " + respuestaServidor);
+            }
 
             userlogin.Text = "Usuario";
             userlogin.ForeColor = Color.Gray;
