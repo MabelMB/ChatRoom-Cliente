@@ -72,8 +72,21 @@ namespace ChatRoom
                     MessageBox.Show($"Error: {ex.Message}");
                 }
             }
+
+            public string EnviarRegistro(string username, string password)
+            {
+                if (socket == null || !socket.Connected)
+                {
+                    Conectar();
+                }
+
+                string eventoRegistro = $"REGISTER|{username}|{password}";
+                string respuesta = Client(eventoRegistro);
+                return respuesta;
+            }
+
         }
-        
+
 
         //DISEÑO -----------------------------------------------------------
         protected override void OnPaint(PaintEventArgs e)
@@ -232,7 +245,7 @@ namespace ChatRoom
         private void registeruserbutton_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(registeruser.Text) || string.IsNullOrEmpty(registerpassword.Text)
-                                                        || string.IsNullOrEmpty(confirmpassword.Text))
+         || string.IsNullOrEmpty(confirmpassword.Text))
             {
                 MessageBox.Show("Ingresa un usuario y contraseña");
                 return;
@@ -244,29 +257,19 @@ namespace ChatRoom
                 return;
             }
 
-            MySqlConnection conn = new MySqlConnection(connection);
-            conn.Open();
+            // Enviar evento al servidor
+            string respuestaServidor = cliente.EnviarRegistro(registeruser.Text, registerpassword.Text);
 
-            MySqlCommand verificacion = new MySqlCommand("SELECT COUNT(*) FROM usuarios WHERE nombre_usuario = @us", conn);
-            verificacion.Parameters.AddWithValue("@us", registeruser.Text);
-
-            int count = Convert.ToInt32(verificacion.ExecuteScalar());
-
-            if (count > 0)
+            if (respuestaServidor.Contains("REGISTER_EXITOSO"))
             {
-                MessageBox.Show("Este nombre de usuario ya está en uso");
-                return;
+                MessageBox.Show("✅ Usuario registrado con éxito");
+            }
+            else if (respuestaServidor.Contains("REGISTER_ERROR"))
+            {
+                MessageBox.Show("❌ No se pudo registrar. El usuario puede existir o hubo un error");
             }
 
-            MySqlCommand cmd = new MySqlCommand("INSERT INTO usuarios (nombre_usuario, contraseña) VALUES (@user, @pass)", conn);
-            cmd.Parameters.AddWithValue("@user", registeruser.Text);
-            cmd.Parameters.AddWithValue("@pass", Crypto.Encrypt(registerpassword.Text));
-
-            int filasAfectadas = cmd.ExecuteNonQuery();
-
-            if (filasAfectadas > 0)
-                MessageBox.Show("Usuario registrado con éxito");
-
+            // Reset de los campos
             registeruser.Text = "Usuario";
             registeruser.ForeColor = Color.Gray;
             registerpassword.Text = "Contraseña";
@@ -277,7 +280,6 @@ namespace ChatRoom
             confirmpassword.ForeColor = Color.Gray;
             confirmpassword.UseSystemPasswordChar = false;
             confirmpassword.PasswordChar = '\0';
-
         }
         //volver al menu principal
         private void registerbackbutton_Click(object sender, EventArgs e)
