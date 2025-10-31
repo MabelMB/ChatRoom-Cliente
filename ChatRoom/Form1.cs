@@ -16,7 +16,9 @@ namespace ChatRoom
         //DECLARACION DE VARIABLES EXTRA -----------------------------------------------------------
         //Form f = null;
         private string connection = "server=127.0.0.1;uid=root;pwd=root;database=ChatRoom";
-        private ClientSocket cliente; 
+        private ClientSocket cliente;
+        int usuarioId;
+        string nombreUsuario;
 
         public STARTMENU()
         {
@@ -81,6 +83,18 @@ namespace ChatRoom
                 }
 
                 string eventoRegistro = $"REGISTER|{username}|{password}";
+                string respuesta = Client(eventoRegistro);
+                return respuesta;
+            }
+
+            public string EnviarHistorial(string username, int userid)
+            {
+                if (socket == null || !socket.Connected)
+                {
+                    Conectar();
+                }
+
+                string eventoRegistro = $"RECENTS|{username}|{userid}";
                 string respuesta = Client(eventoRegistro);
                 return respuesta;
             }
@@ -209,13 +223,20 @@ namespace ChatRoom
 
             MessageBox.Show($"El servidor respondió: {respuestaServidor}");
 
-            if (respuestaServidor.Contains("LOGIN_EXITOSO"))
+            if (respuestaServidor.Contains("LOGIN_EXITOSO|"))
             {
-                MessageBox.Show("¡Login exitoso! (Aquí abrirías Form2)");
+                string mensajeLimpio = respuestaServidor.Replace("<EOF>", "");
+                string[] partes = mensajeLimpio.Split('|');
+                string nombreUsuario = partes[1];
+                int usuarioId = int.Parse(partes[2]);
+                
+                Form2 f = new Form2(this, usuarioId, nombreUsuario);
+                f.Show();
+                this.Hide();
             }
             else if (respuestaServidor.Contains("LOGIN_ERROR"))
             {
-                MessageBox.Show("❌ " + respuestaServidor);
+                MessageBox.Show("ERROR " + respuestaServidor);
             }
 
             userlogin.Text = "Usuario";

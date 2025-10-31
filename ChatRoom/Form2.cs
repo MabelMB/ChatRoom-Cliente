@@ -19,7 +19,7 @@ namespace ChatRoom
     public partial class Form2 : Form
     {
         //DECLARACION DE VARIABLES EXTRA -----------------------------------------------------------
-        //private STARTMENU _mainForm;
+        private STARTMENU _mainForm;
         private string connection = "server=127.0.0.1;uid=root;pwd=root;database=ChatRoom";
         int i = 0;
         int userid;
@@ -27,27 +27,27 @@ namespace ChatRoom
         int currentsalaid;
 
         //CONSTRUCTOR -----------------------------------------------------------
-        //public Form2(STARTMENU mainForm, int userId, string userName)
-        //{
-        //    InitializeComponent();
-        //    //gradient
-        //    this.DoubleBuffered = true;
-        //    //form management
-        //    _mainForm = mainForm;
-        //    //user data load
-        //    if (userName != "null")
-        //    {
-        //        MuestraUsuario(userId, userName);
-        //        MuestraGrupos(userId);
-        //        userid = userId;
-        //    }
-        //}
-
-        public Form2()
+        public Form2(STARTMENU mainForm, int userId, string userName)
         {
             InitializeComponent();
-            MessageBox.Show("Form2 cargado (modo prueba) - Funcionalidad desactivada");
+            //gradient
+            this.DoubleBuffered = true;
+            //form management
+            _mainForm = mainForm;
+            //user data load
+            if (userName != "null")
+            {
+                MuestraUsuario(userId, userName);
+                MuestraGrupos(userId);
+                userid = userId;
+            }
         }
+
+        //public Form2()
+        //{
+        //    InitializeComponent();
+        //    MessageBox.Show("Form2 cargado (modo prueba) - Funcionalidad desactivada");
+        //}
 
 
         //DISEÑO -----------------------------------------------------------
