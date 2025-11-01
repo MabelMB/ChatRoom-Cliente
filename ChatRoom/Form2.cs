@@ -3,15 +3,16 @@ using MySql.Data.MySqlClient;
 //using Mysqlx;
 //using Mysqlx.Crud;
 using System;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Windows.Forms;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace ChatRoom
@@ -27,7 +28,7 @@ namespace ChatRoom
         int currentsalaid;
 
         //CONSTRUCTOR -----------------------------------------------------------
-        public Form2(STARTMENU mainForm, int userId, string userName)
+        public Form2(STARTMENU mainForm, int userId, string userName, string gruposData, string mensajesData)
         {
             InitializeComponent();
             //gradient
@@ -37,18 +38,11 @@ namespace ChatRoom
             //user data load
             if (userName != "null")
             {
-                MuestraUsuario(userId, userName);
-                MuestraGrupos(userId);
+                MuestraUsuario(userName);
+                MuestraGrupos(userId, gruposData);
                 userid = userId;
             }
         }
-
-        //public Form2()
-        //{
-        //    InitializeComponent();
-        //    MessageBox.Show("Form2 cargado (modo prueba) - Funcionalidad desactivada");
-        //}
-
 
         //DISEÑO -----------------------------------------------------------
         protected override void OnPaint(PaintEventArgs e)
@@ -363,60 +357,31 @@ namespace ChatRoom
         //CARGA DE DATOS DEL USUARIO -----------------------------------------------------------
 
         //Carga del nombre de usuario
-        private void MuestraUsuario(int userid, string username)
+        private void MuestraUsuario(string username)
         {
-            MySqlConnection conn = new MySqlConnection(connection);
-            conn.Open();
-            MySqlCommand cmd = new MySqlCommand("SELECT * FROM usuarios WHERE id_usuario = @id", conn);
-            cmd.Parameters.AddWithValue("@id", userid);
 
-            MySqlDataReader Reader = cmd.ExecuteReader();
-            if (Reader.Read())
-            {
-                this.usernamelabel.Text = Reader.GetString("nombre_usuario");
-            }
+            this.usernamelabel.Text = username;
 
         }
 
         //Carga de los grupos del usuario
-        private void MuestraGrupos(int userid)
+        private void MuestraGrupos(int userid, string gruposData)
         {
-            MySqlConnection conn = new MySqlConnection(connection);
-            conn.Open();
-
-            // CONSULTA CORREGIDA - Buscar salas donde el usuario es CREADOR O MIEMBRO
-            MySqlCommand cmd = new MySqlCommand(@"
-        SELECT s.*, 
-               CASE 
-                   WHEN s.id_creador = @id THEN 'creador'
-                   ELSE 'miembro' 
-               END as tipo_miembro
-        FROM salas s
-        WHERE s.id_creador = @id 
-           OR s.id_sala IN (SELECT id_sala FROM miembros_sala WHERE id_usuario = @id)",
-                conn);
-
-            cmd.Parameters.AddWithValue("@id", userid);
-            MySqlDataReader Reader = cmd.ExecuteReader();
-
-            while (Reader.Read())
+            string[] grupos = gruposData.Split(';');
+            foreach (string grupo in grupos)
             {
-                string tipoMiembro = Reader.GetString("tipo_miembro");
-                bool esCreador = (tipoMiembro == "creador");
-
-                AddNewGroup(Reader.GetString("nombre_sala"),
-                           Reader.GetString("descripcion"),
-                           Reader.GetInt32("id_sala"),
-                           esCreador);
-
-                // Si no es creador, asegurar que esté en miembros_sala
-                if (!esCreador)
+                if (!string.IsNullOrEmpty(grupo))
                 {
-                    string rol = "miembro";
-                    agregaMiembro(userid, Reader.GetInt32("id_sala"), rol);
+                    string[] datosGrupo = grupo.Split(':');
+                    int idGrupo = int.Parse(datosGrupo[0]);
+                    string nombreGrupo = datosGrupo[1];
+                    string descripcionGrupo = datosGrupo[2];
+                    string rol = datosGrupo[3]; // "admin" o "miembro"
+
+                    bool esCreador = (rol == "admin");
+                    AddNewGroup(nombreGrupo, descripcionGrupo, idGrupo, esCreador);
                 }
             }
-            Reader.Close();
         }
         //Carga de los miembros del grupo
         private void muestraMiembros(int salaid)

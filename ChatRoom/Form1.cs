@@ -34,14 +34,17 @@ namespace ChatRoom
 
             public string EnviarLogin(string username, string password)
             {
-                if (socket == null || !socket.Connected)
+                if (socket != null)
                 {
-                    Conectar();
+                    socket.Close();
+                    socket = null;
                 }
+
+                Conectar();
 
                 string eventoLogin = $"LOGIN|{username}|{password}";
                 string respuesta = Client(eventoLogin);
-                MessageBox.Show(respuesta);
+                //MessageBox.Show(respuesta);
                 return respuesta;
 
             }
@@ -59,6 +62,7 @@ namespace ChatRoom
 
             public void Conectar()
             {
+
                 IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
                 IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11200);
 
@@ -221,16 +225,19 @@ namespace ChatRoom
             // Enviar login y recibir respuesta
             string respuestaServidor = cliente.EnviarLogin(userlogin.Text, passwordlogin.Text);
 
-            MessageBox.Show($"El servidor respondió: {respuestaServidor}");
+            //MessageBox.Show($"El servidor respondió: {respuestaServidor}");
 
             if (respuestaServidor.Contains("LOGIN_EXITOSO|"))
             {
                 string mensajeLimpio = respuestaServidor.Replace("<EOF>", "");
+               
                 string[] partes = mensajeLimpio.Split('|');
-                string nombreUsuario = partes[1];
-                int usuarioId = int.Parse(partes[2]);
-                
-                Form2 f = new Form2(this, usuarioId, nombreUsuario);
+                string usuario = partes[1];
+                int userId = int.Parse(partes[2]);
+                string gruposData = partes[3];
+                string mensajesData = partes[4];
+
+                Form2 f = new Form2(this, userId, usuario, gruposData, mensajesData);
                 f.Show();
                 this.Hide();
             }
