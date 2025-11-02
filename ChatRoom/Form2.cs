@@ -9,6 +9,7 @@ using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
+using System.Net.Sockets;
 using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
@@ -654,31 +655,114 @@ namespace ChatRoom
         }
 
         //Carga de mensajes
-        private void cargaMensajes(int salaid)
+        private async void cargaMensajes(int salaid)
         {
-
-            chatviewpanel.Controls.Clear();
-
-            if(currentuserid == salaid)
+            try
             {
-                MySqlConnection conn = new MySqlConnection(connection);
-                conn.Open();
-                MySqlCommand cmd = new MySqlCommand("SELECT * FROM mensajes m INNER JOIN usuarios u ON m.id_usuario = u.id_usuario WHERE m.id_sala = @sala ORDER BY m.fecha_envio ASC", conn);
-                cmd.Parameters.AddWithValue("@sala", salaid);
-                MySqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read()) { 
-                    string username = reader.GetString("nombre_usuario");
-                    string message = reader.GetString("mensajes");
-                    int idUsuarioMensaje = reader.GetInt32("id_usuario");
-                    bool usergroup = (idUsuarioMensaje == userid);
-                    string messageWithEmojis = EmojiHelper.ConvertEmojis(message);
-                    AddNewMessage(username, messageWithEmojis, usergroup);
+                chatviewpanel.Controls.Clear();
 
+                // Mostrar mensaje de carga
+                Label loadingLabel = new Label();
+                loadingLabel.Text = "Cargando mensajes...";
+                loadingLabel.AutoSize = true;
+                chatviewpanel.Controls.Add(loadingLabel);
 
-                }
-
+                await Task.Run(() => CargarMensajesAsync(salaid));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}");
             }
         }
+
+        private void CargarMensajesAsync(int salaid)
+        {
+            try
+            {
+                using (Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+                {
+                    // Configurar timeout
+                    clientSocket.SendTimeout = 5000;
+                    clientSocket.ReceiveTimeout = 5000;
+
+                    clientSocket.Connect("127.0.0.1", 11200);
+
+                    string solicitud = $"GET_RECENT_MESSAGES|{salaid}<EOF>";
+                    byte[] requestBytes = Encoding.UTF8.GetBytes(solicitud);
+
+                    clientSocket.Send(requestBytes);
+
+                    // Recibir respuesta
+                    byte[] buffer = new byte[4096];
+                    StringBuilder responseBuilder = new StringBuilder();
+
+                    int bytesRec;
+                    while ((bytesRec = clientSocket.Receive(buffer)) > 0)
+                    {
+                        responseBuilder.Append(Encoding.UTF8.GetString(buffer, 0, bytesRec));
+                        if (responseBuilder.ToString().Contains("<EOF>"))
+                            break;
+                    }
+
+                    string data = responseBuilder.ToString();
+
+                    // Procesar en UI thread
+                    this.Invoke(new Action(() => ProcesarMensajes(data)));
+
+                    clientSocket.Shutdown(SocketShutdown.Both);
+                }
+            }
+            catch (Exception ex)
+            {
+                this.Invoke(new Action(() =>
+                {
+                    chatviewpanel.Controls.Clear();
+                    Label errorLabel = new Label() { Text = $"Error: {ex.Message}", AutoSize = true };
+                    chatviewpanel.Controls.Add(errorLabel);
+                }));
+            }
+        }
+
+        private void ProcesarMensajes(string data)
+        {
+            chatviewpanel.Controls.Clear();
+
+            if (data.StartsWith("RECENT_MESSAGES|"))
+            {
+                string contenido = data.Replace("RECENT_MESSAGES|", "").Replace("<EOF>", "");
+
+                if (string.IsNullOrEmpty(contenido))
+                {
+                    Label noMessages = new Label() { Text = "No hay mensajes en este grupo", AutoSize = true };
+                    chatviewpanel.Controls.Add(noMessages);
+                    return;
+                }
+
+                string[] mensajes = contenido.Split(';');
+
+                foreach (string mensaje in mensajes)
+                {
+                    if (!string.IsNullOrEmpty(mensaje))
+                    {
+                        string[] partes = mensaje.Split(':');
+                        if (partes.Length >= 4)
+                        {
+                            string usuario = partes[1];
+                            string texto = partes[2];
+                            bool esPropio = usuario == usernamelabel.Text;
+                            AddNewMessage(usuario, texto, esPropio);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Label errorLabel = new Label() { Text = "Error al cargar mensajes", AutoSize = true };
+                chatviewpanel.Controls.Add(errorLabel);
+            }
+        }
+
+
         private void MandarMensajeBD(string mensaje)
         {
             if (string.IsNullOrWhiteSpace(mensaje) || currentuserid == 0)
