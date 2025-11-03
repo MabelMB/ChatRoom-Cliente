@@ -14,6 +14,7 @@ using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static ChatRoom.STARTMENU;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace ChatRoom
@@ -27,6 +28,7 @@ namespace ChatRoom
         int userid;
         int currentuserid;
         int currentsalaid;
+       
 
         //CONSTRUCTOR -----------------------------------------------------------
         public Form2(STARTMENU mainForm, int userId, string userName, string gruposData, string mensajesData)
@@ -43,6 +45,7 @@ namespace ChatRoom
                 MuestraGrupos(userId, gruposData);
                 userid = userId;
             }
+            
         }
 
         //DISEÑO -----------------------------------------------------------
@@ -135,59 +138,39 @@ namespace ChatRoom
             chatLayout.BringToFront();
             creategrouppanel.Visible = false;
 
-            if (groupnametextbox.Text == "" && groupdesctextbox.Text == "")
+            if (string.IsNullOrWhiteSpace(groupnametextbox.Text))
             {
-                AddNewGroup("test", "test", 123, false);
+                MessageBox.Show("El nombre del grupo es obligatorio");
                 return;
             }
 
-            try
+            int id = userid;
+
+            string nombreGrupo = groupnametextbox.Text;
+            string descripcionGrupo = string.IsNullOrWhiteSpace(groupdesctextbox.Text) ?
+                "Sin descripción" : groupdesctextbox.Text;
+            string usuariosTexto = textBox1.Text;
             {
-                string nombreGrupo = groupnametextbox.Text;
-                string descripcionGrupo = groupdesctextbox.Text;
+                ClientSocket clienteTemporal = new ClientSocket();
+                string respuesta = clienteTemporal.EnviarCrearGrupo(
+                usernamelabel.Text,
+                userid,
+                nombreGrupo,
+                descripcionGrupo,
+                usuariosTexto
+            );
 
-                int id;
-
-                using (MySqlConnection conn = new MySqlConnection(connection))
+                if (respuesta.Contains("GROUP_CREATED|"))
                 {
-                    conn.Open();
-                    string query = "INSERT INTO salas (nombre_sala, descripcion, id_creador) VALUES (@nombre, @descripcion, @id_creador)";
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@nombre", nombreGrupo);
-                        cmd.Parameters.AddWithValue("@descripcion", descripcionGrupo);
-                        cmd.Parameters.AddWithValue("@id_creador", userid);
-                        cmd.ExecuteNonQuery();
-                        // Obtener el ultimo ID insertado
-                        id = (int)cmd.LastInsertedId;
-                    }
+                    string[] partes = respuesta.Split('|');
+                    int idSalaCreada = int.Parse(partes[1]);
 
+                    currentsalaid = idSalaCreada;
+                    AddNewGroup(nombreGrupo, descripcionGrupo, idSalaCreada, true);
                 }
-
-                if (!string.IsNullOrWhiteSpace(textBox1.Text))
-                {
-                    string[] usuarios = textBox1.Text.Split(',');
-                    foreach (string usuario in usuarios)
-                    {
-                        string usuarioLimpio = usuario.Trim();
-                        if (!string.IsNullOrWhiteSpace(usuarioLimpio))
-                        {
-                            agregaMiembroLista(usuarioLimpio, id, "miembro");
-                        }
-                    }
-                    currentsalaid = id;
-                    agregaMiembro(userid, id, "admin");
-                    AddNewGroup(groupnametextbox.Text, groupdesctextbox.Text, id, true);
-
-
-
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error al crear el grupo: " + ex.Message);
             }
         }
+            
 
         //EVENTOS TEXTBOX -----------------------------------------------------------
         private void usernamelabel_Click_2(object sender, EventArgs e)
@@ -385,119 +368,92 @@ namespace ChatRoom
             }
         }
         //Carga de los miembros del grupo
-        private void muestraMiembros(int salaid)
-        {
-            MySqlConnection conn = new MySqlConnection(connection);
-            conn.Open();
-            MySqlCommand cmd = new MySqlCommand("SELECT u.id_usuario, u.nombre_usuario FROM miembros_sala ms INNER JOIN usuarios u ON ms.id_usuario = u.id_usuario WHERE ms.id_sala = @sala", conn);
-            cmd.Parameters.AddWithValue("@sala", salaid);
-
-            MySqlDataReader Reader = cmd.ExecuteReader();
-
-            List<string> miembros = new List<string>();
-
-            while (Reader.Read()) {
-                miembros.Add(Reader.GetString("nombre_usuario"));
-            }
-            groupmemberslabel.Text = string.Join(", ", miembros);
-        }
-
-        private void agregaMiembro(int userid, int salaid, string rol) {
-
-
-            MySqlConnection conn = new MySqlConnection(connection);
-            conn.Open();
-
-            MySqlCommand verificar = new MySqlCommand("SELECT COUNT(*) FROM miembros_sala WHERE id_usuario = @us AND id_sala = @sala", conn);
-            verificar.Parameters.AddWithValue("@us", userid);
-            verificar.Parameters.AddWithValue("@sala", salaid);
-
-            int existe = Convert.ToInt32(verificar.ExecuteScalar());
-
-
-            if (existe == 0)
-            {
-                MySqlCommand cmd = new MySqlCommand("INSERT INTO miembros_sala (id_usuario, id_sala, rol) VALUES (@us, @sala, @rol)", conn);
-                cmd.Parameters.AddWithValue("@us", userid);
-                cmd.Parameters.AddWithValue("@sala", salaid);
-                cmd.Parameters.AddWithValue("@rol", rol);
-
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        private void agregaMiembroLista(string user, int salaid, string rol)
+        private async void muestraMiembros(int salaid)
         {
             try
             {
-                using (MySqlConnection conn = new MySqlConnection(connection))
+                
+                await Task.Run(() => CargarMiembrosAsync(salaid));
+            }
+            catch (Exception ex)
+            {
+                groupmemberslabel.Text = $"Error: {ex.Message}";
+            }
+        }
+
+        private void CargarMiembrosAsync(int salaid)
+        {
+            try
+            {
+                using (Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
                 {
-                    conn.Open();
+                    // Configurar timeout
+                    clientSocket.SendTimeout = 5000;
+                    clientSocket.ReceiveTimeout = 5000;
 
-                    MySqlCommand obtenerIdCmd = new MySqlCommand("SELECT id_usuario FROM usuarios WHERE nombre_usuario = @nombre", conn);
-                    obtenerIdCmd.Parameters.AddWithValue("@nombre", user);
+                    clientSocket.Connect("127.0.0.1", 11200);
 
-                    object resultado = obtenerIdCmd.ExecuteScalar();
-                    if (resultado != null)
+                    // SOLICITUD DE MIEMBROS
+                    string solicitud = $"GET_MEMBERS|{salaid}<EOF>";
+                    byte[] requestBytes = Encoding.UTF8.GetBytes(solicitud);
+
+                    clientSocket.Send(requestBytes);
+
+                    // Recibir respuesta
+                    byte[] buffer = new byte[4096];
+                    StringBuilder responseBuilder = new StringBuilder();
+
+                    int bytesRec;
+                    while ((bytesRec = clientSocket.Receive(buffer)) > 0)
                     {
-                        int userId = Convert.ToInt32(resultado);
-
-                        MySqlCommand cmd = new MySqlCommand("INSERT INTO miembros_sala (id_usuario, id_sala, rol) VALUES (@us, @sala, @rol)", conn);
-                        cmd.Parameters.AddWithValue("@us", userId);
-                        cmd.Parameters.AddWithValue("@sala", salaid);
-                        cmd.Parameters.AddWithValue("@rol", rol);
-
-                        cmd.ExecuteNonQuery();
-                        MessageBox.Show("El usuario se agregó con éxito");
+                        responseBuilder.Append(Encoding.UTF8.GetString(buffer, 0, bytesRec));
+                        if (responseBuilder.ToString().Contains("<EOF>"))
+                            break;
                     }
-                    else
-                    {
-                        MessageBox.Show("El usuario no existe");
-                    }
+
+                    string data = responseBuilder.ToString();
+
+                    // Procesar en UI thread
+                    this.Invoke(new Action(() => ProcesarMiembros(data)));
                 }
             }
             catch (Exception ex)
             {
-                // Si falla, simplemente continuamos
-                Console.WriteLine($"Error al agregar {user}: {ex.Message}");
+                this.Invoke(new Action(() =>
+                {
+                    groupmemberslabel.Text = $"Error: {ex.Message}";
+                }));
             }
         }
 
 
-        //Carga de usuarios disponibles para agregar al grupo
-        private List<string> ObtenerUsuariosDisponibles(int idSala)
+        private void ProcesarMiembros(string data)
         {
-            List<string> usuariosDisponibles = new List<string>();
-
             try
             {
-                using (MySqlConnection conn = new MySqlConnection(connection))
+                // Limpiar el marcador <EOF>
+                string dataLimpia = data.Replace("<EOF>", "");
+
+                // Formato esperado: "MEMBERS_DATA|1|ana;pedro;carlos"
+                if (dataLimpia.Contains("MEMBERS_DATA|"))
                 {
-                    conn.Open();
-
-                    // Consulta para obtener usuarios que NO son miembros y NO son el creador
-                    string query = @" SELECT u.id_usuario, u.nombre_usuario FROM usuarios u WHERE u.id_usuario NOT IN (SELECT id_usuario FROM miembros_sala WHERE id_sala = @salaId)
-                                    AND u.id_usuario NOT IN (SELECT id_creador FROM salas WHERE id_sala = @salaId )";
-
-                    MySqlCommand cmd = new MySqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@salaId", idSala);
-
-                    using (MySqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            usuariosDisponibles.Add(reader.GetString("nombre_usuario"));
-                        }
-                    }
+                    string[] partes = dataLimpia.Split('|');
+                    int salaId = int.Parse(partes[1]);
+                    string miembrosData = partes[2];
+                    string[] miembros = miembrosData.Split(';');
+                    groupmemberslabel.Text = string.Join(", ", miembros);
+                }
+                else if (dataLimpia.Contains("ERROR|"))
+                {
+                    groupmemberslabel.Text = "Error cargando miembros";
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al obtener usuarios disponibles: " + ex.Message);
+                groupmemberslabel.Text = $"Error procesando: {ex.Message}";
             }
-
-            return usuariosDisponibles;
         }
+
 
         private void AddNewMessage(string username, string message, bool usergroup)
         {
@@ -952,7 +908,7 @@ namespace ChatRoom
                     string usuarioLimpio = usuario.Trim();
                     if (!string.IsNullOrWhiteSpace(usuarioLimpio))
                     {
-                        agregaMiembroLista(usuarioLimpio, currentsalaid, "miembro");
+                        //agregaMiembroLista(usuarioLimpio, currentsalaid, "miembro");
                     }
                 }
             }

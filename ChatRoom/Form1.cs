@@ -103,6 +103,31 @@ namespace ChatRoom
                 return respuesta;
             }
 
+            public string EnviarMiembros(string idsala, int userid)
+            {
+                if (socket == null || !socket.Connected)
+                {
+                    Conectar();
+                }
+
+                string eventoRegistro = $"GET_MEMBERS|{idsala}";
+                string respuesta = Client(eventoRegistro);
+                return respuesta;
+            }
+
+            public string EnviarCrearGrupo(string username, int userid, string nombreGrupo, string descripcionGrupo, string usuariosTexto)
+            {
+                if (socket == null || !socket.Connected)
+                {
+                    Conectar();
+                }
+
+
+                string eventoRegistro = $"CREATE_GROUP|{username}|{userid}|{nombreGrupo}|{descripcionGrupo}|{usuariosTexto}";
+                string respuesta = Client(eventoRegistro);
+                return respuesta;
+            }
+
         }
 
 
@@ -236,7 +261,7 @@ namespace ChatRoom
                 int userId = int.Parse(partes[2]);
                 string gruposData = partes[3];
                 string mensajesData = partes[4];
-
+                
                 Form2 f = new Form2(this, userId, usuario, gruposData, mensajesData);
                 f.Show();
                 this.Hide();
