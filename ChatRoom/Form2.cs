@@ -31,7 +31,7 @@ namespace ChatRoom
        
 
         //CONSTRUCTOR -----------------------------------------------------------
-        public Form2(STARTMENU mainForm, int userId, string userName, string gruposData, string mensajesData)
+        public Form2(STARTMENU mainForm, int userId, string userName, string gruposData)
         {
             InitializeComponent();
             //gradient

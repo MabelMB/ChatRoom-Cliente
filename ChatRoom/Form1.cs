@@ -260,9 +260,9 @@ namespace ChatRoom
                 string usuario = partes[1];
                 int userId = int.Parse(partes[2]);
                 string gruposData = partes[3];
-                string mensajesData = partes[4];
                 
-                Form2 f = new Form2(this, userId, usuario, gruposData, mensajesData);
+                
+                Form2 f = new Form2(this, userId, usuario, gruposData);
                 f.Show();
                 this.Hide();
             }
