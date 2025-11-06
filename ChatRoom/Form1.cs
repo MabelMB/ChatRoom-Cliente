@@ -63,7 +63,7 @@ namespace ChatRoom
             public void Conectar()
             {
 
-                IPAddress ipAddress = IPAddress.Parse("192.168.56.1");
+                IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
                 IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11200);
 
                 try
@@ -124,6 +124,18 @@ namespace ChatRoom
 
 
                 string eventoRegistro = $"CREATE_GROUP|{username}|{userid}|{nombreGrupo}|{descripcionGrupo}|{usuariosTexto}";
+                string respuesta = Client(eventoRegistro);
+                return respuesta;
+            }
+
+            public string EnviarEliminarGrupo(int salaid, int userid)
+            {
+                if (socket == null || !socket.Connected)
+                {
+                    Conectar();
+                }
+
+                string eventoRegistro = $"DELETE_GROUP|{salaid}|{userid}";
                 string respuesta = Client(eventoRegistro);
                 return respuesta;
             }
@@ -262,7 +274,7 @@ namespace ChatRoom
                 string gruposData = partes[3];
                 
                 
-                Form2 f = new Form2(this, userId, usuario, gruposData);
+                Form2 f = new Form2(this, cliente, userId, usuario, gruposData);
                 f.Show();
                 this.Hide();
             }

@@ -1,5 +1,7 @@
 ﻿using ChatRoom;
 using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI;
+
 //using Mysqlx;
 //using Mysqlx.Crud;
 using System;
@@ -23,21 +25,24 @@ namespace ChatRoom
     {
         //DECLARACION DE VARIABLES EXTRA -----------------------------------------------------------
         private STARTMENU _mainForm;
+        private STARTMENU.ClientSocket cliente;
         private string connection = "server=127.0.0.1;uid=root;pwd=root;database=ChatRoom";
         int i = 0;
         int userid;
         int currentuserid;
         int currentsalaid;
+        int salaid;
        
 
         //CONSTRUCTOR -----------------------------------------------------------
-        public Form2(STARTMENU mainForm, int userId, string userName, string gruposData)
+        public Form2(STARTMENU mainForm, STARTMENU.ClientSocket clienteExistente, int userId, string userName, string gruposData)
         {
             InitializeComponent();
             //gradient
             this.DoubleBuffered = true;
             //form management
             _mainForm = mainForm;
+            cliente = clienteExistente;
             //user data load
             if (userName != "null")
             {
@@ -240,6 +245,7 @@ namespace ChatRoom
             Panel p = sender as Panel;
             int id = (int)p.Tag;
             currentuserid = id;
+            salaid = (int)p.Tag;
 
             //grouptitlepanel.Text = label.Text;
             foreach (Control control in p.Controls)
@@ -283,25 +289,38 @@ namespace ChatRoom
         }
         private void delgroupbutton_Click(object sender, EventArgs e)
         {
-            int targetId = currentuserid;
+            int idSala = salaid;
 
-
-            using (MySqlConnection conn = new MySqlConnection(connection))
+            try
             {
-                conn.Open();
-                MySqlCommand cmd = new MySqlCommand("DELETE FROM miembros_sala WHERE id_sala = @sala AND id_usuario = @user", conn);
-                cmd.Parameters.AddWithValue("@sala", currentuserid);
-                cmd.Parameters.AddWithValue("@user", userid);
-                int filasAfectadas = cmd.ExecuteNonQuery();
-            }
+                
+                string respuesta = cliente.EnviarEliminarGrupo(idSala, userid);
+                MessageBox.Show($"Respuesta del servidor: {respuesta}");
 
-            foreach (Control ctrl in groupViewPanel.Controls)
-            {
-                if (ctrl.Tag is int id && id == targetId)
+                if (respuesta.Contains("DELETE_EXITOSO"))
                 {
-                    groupViewPanel.Controls.Remove(ctrl);
-                    break;
+                    foreach (Control ctrl in groupViewPanel.Controls)
+                    {
+                        if (ctrl.Tag is int id && id == idSala)
+                        {
+                            groupViewPanel.Controls.Remove(ctrl);
+                            ctrl.Dispose();
+                            break;
+                        }
+                    }
+
+                    MessageBox.Show("Grupo eliminado exitosamente");
                 }
+                else
+                {
+                    MessageBox.Show("Error al eliminar el grupo: " + respuesta);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}");
+                return;
             }
 
             freezescreenpanel.Visible = false;
@@ -317,7 +336,7 @@ namespace ChatRoom
         {
             //AddNewMessage("Alexis", tempmsgtextbox.Text, tempusercheck.Checked ? true : false);
             //IMPORTANT -+-+-+-+-+-+-*_*_*_*_*_+-+-+-+-+_*_*_*_*_*-+-+-+-+_**_*_*-+
-            MandarMensajeBD(tempmsgtextbox.Text);
+            //MandarMensajeBD(tempmsgtextbox.Text);
         }
         private void confirmcancel_Click(object sender, EventArgs e)
         {
@@ -719,37 +738,37 @@ namespace ChatRoom
         }
 
 
-        private void MandarMensajeBD(string mensaje)
-        {
-            if (string.IsNullOrWhiteSpace(mensaje) || currentuserid == 0)
-                return;
+        //private void MandarMensajeBD(string mensaje)
+        //{
+        //    if (string.IsNullOrWhiteSpace(mensaje) || currentuserid == 0)
+        //        return;
 
-            try
-            {
-                using (MySqlConnection conn = new MySqlConnection(connection))
-                {
-                    conn.Open();
-                    string query = "INSERT INTO mensajes (id_usuario, id_sala, mensajes, fecha_envio) VALUES (@usuario, @sala, @mensaje, @fecha)";
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@usuario", userid);
-                        cmd.Parameters.AddWithValue("@sala", currentuserid);
-                        cmd.Parameters.AddWithValue("@mensaje", mensaje);
-                        cmd.Parameters.AddWithValue("@fecha", DateTime.Now);
-                        cmd.ExecuteNonQuery();
-                    }
-                }
+        //    try
+        //    {
+        //        using (MySqlConnection conn = new MySqlConnection(connection))
+        //        {
+        //            conn.Open();
+        //            string query = "INSERT INTO mensajes (id_usuario, id_sala, mensajes, fecha_envio) VALUES (@usuario, @sala, @mensaje, @fecha)";
+        //            using (MySqlCommand cmd = new MySqlCommand(query, conn))
+        //            {
+        //                cmd.Parameters.AddWithValue("@usuario", userid);
+        //                cmd.Parameters.AddWithValue("@sala", currentuserid);
+        //                cmd.Parameters.AddWithValue("@mensaje", mensaje);
+        //                cmd.Parameters.AddWithValue("@fecha", DateTime.Now);
+        //                cmd.ExecuteNonQuery();
+        //            }
+        //        }
 
-                string mensajeConEmojis = EmojiHelper.ConvertEmojis(mensaje);
-                AddNewMessage(usernamelabel.Text, mensajeConEmojis, true);
+        //        string mensajeConEmojis = EmojiHelper.ConvertEmojis(mensaje);
+        //        AddNewMessage(usernamelabel.Text, mensajeConEmojis, true);
 
-                tempmsgtextbox.Clear();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error al enviar el mensaje: " + ex.Message);
-            }
-        }
+        //        tempmsgtextbox.Clear();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show("Error al enviar el mensaje: " + ex.Message);
+        //    }
+        //}
         private bool UsuarioExisteEnGrupo(string nombreUsuario, int salaId)
         {
             try
