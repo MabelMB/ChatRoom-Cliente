@@ -352,6 +352,8 @@ namespace ChatRoom
             confirmpassword.PasswordChar = '\0';
         }
 
+        //:3
+
         //EVENTOS TEXTBOX -----------------------------------------------------------
         //Menu login ***************
         private void userlogin_TextChanged(object sender, EventArgs e)
