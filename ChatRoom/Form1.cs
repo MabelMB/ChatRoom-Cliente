@@ -63,7 +63,7 @@ namespace ChatRoom
             public void Conectar()
             {
 
-                IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+                IPAddress ipAddress = IPAddress.Parse("192.168.56.1");
                 IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11200);
 
                 try
