@@ -30,11 +30,16 @@
         {
             this.mainLayout = new System.Windows.Forms.TableLayoutPanel();
             this.groupLayout = new System.Windows.Forms.TableLayoutPanel();
+            this.userviewpanel = new GlassPanel();
+            this.closesesionbutton = new System.Windows.Forms.Button();
+            this.usernamelabel = new System.Windows.Forms.Label();
+            this.userpicture = new System.Windows.Forms.PictureBox();
+            this.glassPanel1 = new GlassPanel();
+            this.groupViewPanel = new System.Windows.Forms.FlowLayoutPanel();
+            this.yourgroupslabel = new System.Windows.Forms.Label();
+            this.creategroupbutton = new System.Windows.Forms.Button();
+            this.groupslabel = new System.Windows.Forms.Label();
             this.grouplayout2 = new System.Windows.Forms.Panel();
-            this.groupconfigpanel = new System.Windows.Forms.Panel();
-            this.backbutton = new System.Windows.Forms.Button();
-            this.delgroupbutton = new System.Windows.Forms.Button();
-            this.configtitlelabel = new System.Windows.Forms.Label();
             this.chatLayout = new System.Windows.Forms.Panel();
             this.sendmsgpanel = new System.Windows.Forms.Panel();
             this.tempmsgtextbox = new System.Windows.Forms.TextBox();
@@ -45,6 +50,10 @@
             this.configbutton = new System.Windows.Forms.Button();
             this.groupmemberslabel = new System.Windows.Forms.Label();
             this.groputitlelabel = new System.Windows.Forms.Label();
+            this.groupconfigpanel = new System.Windows.Forms.Panel();
+            this.backbutton = new System.Windows.Forms.Button();
+            this.delgroupbutton = new System.Windows.Forms.Button();
+            this.configtitlelabel = new System.Windows.Forms.Label();
             this.creategrouppanel = new System.Windows.Forms.Panel();
             this.button1 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
@@ -61,15 +70,6 @@
             this.label4 = new System.Windows.Forms.Label();
             this.chooseagroup = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.userviewpanel = new GlassPanel();
-            this.closesesionbutton = new System.Windows.Forms.Button();
-            this.usernamelabel = new System.Windows.Forms.Label();
-            this.userpicture = new System.Windows.Forms.PictureBox();
-            this.glassPanel1 = new GlassPanel();
-            this.groupViewPanel = new System.Windows.Forms.FlowLayoutPanel();
-            this.yourgroupslabel = new System.Windows.Forms.Label();
-            this.creategroupbutton = new System.Windows.Forms.Button();
-            this.groupslabel = new System.Windows.Forms.Label();
             this.freezescreenpanel = new GlassPanel();
             this.confirmationpanel = new GlassPanel();
             this.confirmcancel = new System.Windows.Forms.Button();
@@ -77,20 +77,20 @@
             this.label5 = new System.Windows.Forms.Label();
             this.mainLayout.SuspendLayout();
             this.groupLayout.SuspendLayout();
-            this.grouplayout2.SuspendLayout();
-            this.groupconfigpanel.SuspendLayout();
-            this.chatLayout.SuspendLayout();
-            this.sendmsgpanel.SuspendLayout();
-            this.auxchatpanel.SuspendLayout();
-            this.chatTitlePanel.SuspendLayout();
-            this.creategrouppanel.SuspendLayout();
-            this.panel1.SuspendLayout();
-            this.chooseagrouppanel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.userviewpanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.userpicture)).BeginInit();
             this.glassPanel1.SuspendLayout();
             this.groupViewPanel.SuspendLayout();
+            this.grouplayout2.SuspendLayout();
+            this.chatLayout.SuspendLayout();
+            this.sendmsgpanel.SuspendLayout();
+            this.auxchatpanel.SuspendLayout();
+            this.chatTitlePanel.SuspendLayout();
+            this.groupconfigpanel.SuspendLayout();
+            this.creategrouppanel.SuspendLayout();
+            this.panel1.SuspendLayout();
+            this.chooseagrouppanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.confirmationpanel.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -136,6 +136,130 @@
             this.groupLayout.TabIndex = 0;
             this.groupLayout.Paint += new System.Windows.Forms.PaintEventHandler(this.gropuLayout_Paint);
             // 
+            // userviewpanel
+            // 
+            this.userviewpanel.BorderRadius = 20;
+            this.userviewpanel.Controls.Add(this.closesesionbutton);
+            this.userviewpanel.Controls.Add(this.usernamelabel);
+            this.userviewpanel.Controls.Add(this.userpicture);
+            this.userviewpanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.userviewpanel.DrawBorder = true;
+            this.userviewpanel.EnableBlur = true;
+            this.userviewpanel.Location = new System.Drawing.Point(3, 4);
+            this.userviewpanel.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.userviewpanel.Name = "userviewpanel";
+            this.userviewpanel.OverlayColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(230)))), ((int)(((byte)(240)))), ((int)(((byte)(255)))));
+            this.userviewpanel.Size = new System.Drawing.Size(258, 148);
+            this.userviewpanel.TabIndex = 3;
+            // 
+            // closesesionbutton
+            // 
+            this.closesesionbutton.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.closesesionbutton.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
+            this.closesesionbutton.Location = new System.Drawing.Point(34, 112);
+            this.closesesionbutton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.closesesionbutton.Name = "closesesionbutton";
+            this.closesesionbutton.Size = new System.Drawing.Size(197, 29);
+            this.closesesionbutton.TabIndex = 1;
+            this.closesesionbutton.Text = "Cerrar sesión";
+            this.closesesionbutton.UseVisualStyleBackColor = true;
+            this.closesesionbutton.Click += new System.EventHandler(this.closesession_Click);
+            // 
+            // usernamelabel
+            // 
+            this.usernamelabel.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.usernamelabel.AutoSize = true;
+            this.usernamelabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 13F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
+            this.usernamelabel.ForeColor = System.Drawing.Color.White;
+            this.usernamelabel.Location = new System.Drawing.Point(72, 15);
+            this.usernamelabel.Name = "usernamelabel";
+            this.usernamelabel.Size = new System.Drawing.Size(168, 30);
+            this.usernamelabel.TabIndex = 1;
+            this.usernamelabel.Text = "USERNAME";
+            this.usernamelabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.usernamelabel.Click += new System.EventHandler(this.usernamelabel_Click_2);
+            // 
+            // userpicture
+            // 
+            this.userpicture.Image = global::ChatRoom.Properties.Resources.image_removebg_preview__2_;
+            this.userpicture.Location = new System.Drawing.Point(7, 10);
+            this.userpicture.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.userpicture.Name = "userpicture";
+            this.userpicture.Size = new System.Drawing.Size(58, 42);
+            this.userpicture.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.userpicture.TabIndex = 2;
+            this.userpicture.TabStop = false;
+            // 
+            // glassPanel1
+            // 
+            this.glassPanel1.BorderRadius = 20;
+            this.glassPanel1.Controls.Add(this.groupViewPanel);
+            this.glassPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.glassPanel1.DrawBorder = true;
+            this.glassPanel1.EnableBlur = true;
+            this.glassPanel1.Location = new System.Drawing.Point(3, 175);
+            this.glassPanel1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.glassPanel1.Name = "glassPanel1";
+            this.glassPanel1.OverlayColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.glassPanel1.Size = new System.Drawing.Size(258, 341);
+            this.glassPanel1.TabIndex = 4;
+            // 
+            // groupViewPanel
+            // 
+            this.groupViewPanel.AutoScroll = true;
+            this.groupViewPanel.Controls.Add(this.yourgroupslabel);
+            this.groupViewPanel.Controls.Add(this.creategroupbutton);
+            this.groupViewPanel.Controls.Add(this.groupslabel);
+            this.groupViewPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupViewPanel.Location = new System.Drawing.Point(0, 0);
+            this.groupViewPanel.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.groupViewPanel.Name = "groupViewPanel";
+            this.groupViewPanel.Size = new System.Drawing.Size(258, 341);
+            this.groupViewPanel.TabIndex = 5;
+            this.groupViewPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.groupViewPanel_Paint_1);
+            // 
+            // yourgroupslabel
+            // 
+            this.yourgroupslabel.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.yourgroupslabel.BackColor = System.Drawing.Color.Transparent;
+            this.yourgroupslabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
+            this.yourgroupslabel.ForeColor = System.Drawing.SystemColors.Control;
+            this.yourgroupslabel.Location = new System.Drawing.Point(3, 0);
+            this.yourgroupslabel.Name = "yourgroupslabel";
+            this.yourgroupslabel.Size = new System.Drawing.Size(250, 29);
+            this.yourgroupslabel.TabIndex = 0;
+            this.yourgroupslabel.Text = "Tus grupos";
+            this.yourgroupslabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // creategroupbutton
+            // 
+            this.creategroupbutton.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.creategroupbutton.BackColor = System.Drawing.Color.Transparent;
+            this.creategroupbutton.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
+            this.creategroupbutton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(0)))));
+            this.creategroupbutton.Location = new System.Drawing.Point(3, 33);
+            this.creategroupbutton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.creategroupbutton.Name = "creategroupbutton";
+            this.creategroupbutton.Size = new System.Drawing.Size(250, 40);
+            this.creategroupbutton.TabIndex = 0;
+            this.creategroupbutton.Text = "+ Crear grupo";
+            this.creategroupbutton.UseVisualStyleBackColor = false;
+            this.creategroupbutton.Click += new System.EventHandler(this.creategroupbutton_Click);
+            // 
+            // groupslabel
+            // 
+            this.groupslabel.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.groupslabel.BackColor = System.Drawing.Color.Transparent;
+            this.groupslabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
+            this.groupslabel.ForeColor = System.Drawing.SystemColors.Control;
+            this.groupslabel.Location = new System.Drawing.Point(3, 77);
+            this.groupslabel.Name = "groupslabel";
+            this.groupslabel.Size = new System.Drawing.Size(250, 29);
+            this.groupslabel.TabIndex = 1;
+            this.groupslabel.Text = "Grupos";
+            this.groupslabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.groupslabel.Click += new System.EventHandler(this.groupslabel_Click);
+            // 
             // grouplayout2
             // 
             this.grouplayout2.BackColor = System.Drawing.Color.Transparent;
@@ -149,52 +273,6 @@
             this.grouplayout2.Name = "grouplayout2";
             this.grouplayout2.Size = new System.Drawing.Size(543, 520);
             this.grouplayout2.TabIndex = 6;
-            // 
-            // groupconfigpanel
-            // 
-            this.groupconfigpanel.Controls.Add(this.backbutton);
-            this.groupconfigpanel.Controls.Add(this.delgroupbutton);
-            this.groupconfigpanel.Controls.Add(this.configtitlelabel);
-            this.groupconfigpanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.groupconfigpanel.Location = new System.Drawing.Point(0, 0);
-            this.groupconfigpanel.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.groupconfigpanel.Name = "groupconfigpanel";
-            this.groupconfigpanel.Size = new System.Drawing.Size(543, 520);
-            this.groupconfigpanel.TabIndex = 3;
-            this.groupconfigpanel.Paint += new System.Windows.Forms.PaintEventHandler(this.groupconfigpanel_Paint);
-            // 
-            // backbutton
-            // 
-            this.backbutton.Location = new System.Drawing.Point(442, 19);
-            this.backbutton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.backbutton.Name = "backbutton";
-            this.backbutton.Size = new System.Drawing.Size(87, 29);
-            this.backbutton.TabIndex = 1;
-            this.backbutton.Text = "Volver";
-            this.backbutton.UseVisualStyleBackColor = true;
-            this.backbutton.Click += new System.EventHandler(this.backbutton_Click);
-            // 
-            // delgroupbutton
-            // 
-            this.delgroupbutton.Location = new System.Drawing.Point(182, 264);
-            this.delgroupbutton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.delgroupbutton.Name = "delgroupbutton";
-            this.delgroupbutton.Size = new System.Drawing.Size(179, 35);
-            this.delgroupbutton.TabIndex = 0;
-            this.delgroupbutton.Text = "Salir del grupo";
-            this.delgroupbutton.UseVisualStyleBackColor = true;
-            this.delgroupbutton.Click += new System.EventHandler(this.delgroupbutton_Click);
-            // 
-            // configtitlelabel
-            // 
-            this.configtitlelabel.AutoSize = true;
-            this.configtitlelabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 16.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.configtitlelabel.ForeColor = System.Drawing.SystemColors.Control;
-            this.configtitlelabel.Location = new System.Drawing.Point(6, 11);
-            this.configtitlelabel.Name = "configtitlelabel";
-            this.configtitlelabel.Size = new System.Drawing.Size(385, 38);
-            this.configtitlelabel.TabIndex = 0;
-            this.configtitlelabel.Text = "Configuración del grupo";
             // 
             // chatLayout
             // 
@@ -308,6 +386,52 @@
             this.groputitlelabel.TabIndex = 7;
             this.groputitlelabel.Text = "GROUPTITLE";
             this.groputitlelabel.Click += new System.EventHandler(this.grouptitlepanel_Click);
+            // 
+            // groupconfigpanel
+            // 
+            this.groupconfigpanel.Controls.Add(this.backbutton);
+            this.groupconfigpanel.Controls.Add(this.delgroupbutton);
+            this.groupconfigpanel.Controls.Add(this.configtitlelabel);
+            this.groupconfigpanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupconfigpanel.Location = new System.Drawing.Point(0, 0);
+            this.groupconfigpanel.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.groupconfigpanel.Name = "groupconfigpanel";
+            this.groupconfigpanel.Size = new System.Drawing.Size(543, 520);
+            this.groupconfigpanel.TabIndex = 3;
+            this.groupconfigpanel.Paint += new System.Windows.Forms.PaintEventHandler(this.groupconfigpanel_Paint);
+            // 
+            // backbutton
+            // 
+            this.backbutton.Location = new System.Drawing.Point(442, 19);
+            this.backbutton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.backbutton.Name = "backbutton";
+            this.backbutton.Size = new System.Drawing.Size(87, 29);
+            this.backbutton.TabIndex = 1;
+            this.backbutton.Text = "Volver";
+            this.backbutton.UseVisualStyleBackColor = true;
+            this.backbutton.Click += new System.EventHandler(this.backbutton_Click);
+            // 
+            // delgroupbutton
+            // 
+            this.delgroupbutton.Location = new System.Drawing.Point(182, 264);
+            this.delgroupbutton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.delgroupbutton.Name = "delgroupbutton";
+            this.delgroupbutton.Size = new System.Drawing.Size(179, 35);
+            this.delgroupbutton.TabIndex = 0;
+            this.delgroupbutton.Text = "Salir del grupo";
+            this.delgroupbutton.UseVisualStyleBackColor = true;
+            this.delgroupbutton.Click += new System.EventHandler(this.delgroupbutton_Click);
+            // 
+            // configtitlelabel
+            // 
+            this.configtitlelabel.AutoSize = true;
+            this.configtitlelabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 16.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.configtitlelabel.ForeColor = System.Drawing.SystemColors.Control;
+            this.configtitlelabel.Location = new System.Drawing.Point(6, 11);
+            this.configtitlelabel.Name = "configtitlelabel";
+            this.configtitlelabel.Size = new System.Drawing.Size(385, 38);
+            this.configtitlelabel.TabIndex = 0;
+            this.configtitlelabel.Text = "Configuración del grupo";
             // 
             // creategrouppanel
             // 
@@ -492,130 +616,6 @@
             this.pictureBox1.TabIndex = 1;
             this.pictureBox1.TabStop = false;
             // 
-            // userviewpanel
-            // 
-            this.userviewpanel.BorderRadius = 20;
-            this.userviewpanel.Controls.Add(this.closesesionbutton);
-            this.userviewpanel.Controls.Add(this.usernamelabel);
-            this.userviewpanel.Controls.Add(this.userpicture);
-            this.userviewpanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.userviewpanel.DrawBorder = true;
-            this.userviewpanel.EnableBlur = true;
-            this.userviewpanel.Location = new System.Drawing.Point(3, 4);
-            this.userviewpanel.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.userviewpanel.Name = "userviewpanel";
-            this.userviewpanel.OverlayColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(230)))), ((int)(((byte)(240)))), ((int)(((byte)(255)))));
-            this.userviewpanel.Size = new System.Drawing.Size(258, 148);
-            this.userviewpanel.TabIndex = 3;
-            // 
-            // closesesionbutton
-            // 
-            this.closesesionbutton.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.closesesionbutton.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
-            this.closesesionbutton.Location = new System.Drawing.Point(34, 112);
-            this.closesesionbutton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.closesesionbutton.Name = "closesesionbutton";
-            this.closesesionbutton.Size = new System.Drawing.Size(197, 29);
-            this.closesesionbutton.TabIndex = 1;
-            this.closesesionbutton.Text = "Cerrar sesión";
-            this.closesesionbutton.UseVisualStyleBackColor = true;
-            this.closesesionbutton.Click += new System.EventHandler(this.closesession_Click);
-            // 
-            // usernamelabel
-            // 
-            this.usernamelabel.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.usernamelabel.AutoSize = true;
-            this.usernamelabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 13F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
-            this.usernamelabel.ForeColor = System.Drawing.Color.White;
-            this.usernamelabel.Location = new System.Drawing.Point(72, 15);
-            this.usernamelabel.Name = "usernamelabel";
-            this.usernamelabel.Size = new System.Drawing.Size(168, 30);
-            this.usernamelabel.TabIndex = 1;
-            this.usernamelabel.Text = "USERNAME";
-            this.usernamelabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.usernamelabel.Click += new System.EventHandler(this.usernamelabel_Click_2);
-            // 
-            // userpicture
-            // 
-            this.userpicture.Image = global::ChatRoom.Properties.Resources.image_removebg_preview__2_;
-            this.userpicture.Location = new System.Drawing.Point(7, 10);
-            this.userpicture.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.userpicture.Name = "userpicture";
-            this.userpicture.Size = new System.Drawing.Size(58, 42);
-            this.userpicture.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.userpicture.TabIndex = 2;
-            this.userpicture.TabStop = false;
-            // 
-            // glassPanel1
-            // 
-            this.glassPanel1.BorderRadius = 20;
-            this.glassPanel1.Controls.Add(this.groupViewPanel);
-            this.glassPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.glassPanel1.DrawBorder = true;
-            this.glassPanel1.EnableBlur = true;
-            this.glassPanel1.Location = new System.Drawing.Point(3, 175);
-            this.glassPanel1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.glassPanel1.Name = "glassPanel1";
-            this.glassPanel1.OverlayColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.glassPanel1.Size = new System.Drawing.Size(258, 341);
-            this.glassPanel1.TabIndex = 4;
-            // 
-            // groupViewPanel
-            // 
-            this.groupViewPanel.AutoScroll = true;
-            this.groupViewPanel.Controls.Add(this.yourgroupslabel);
-            this.groupViewPanel.Controls.Add(this.creategroupbutton);
-            this.groupViewPanel.Controls.Add(this.groupslabel);
-            this.groupViewPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.groupViewPanel.Location = new System.Drawing.Point(0, 0);
-            this.groupViewPanel.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.groupViewPanel.Name = "groupViewPanel";
-            this.groupViewPanel.Size = new System.Drawing.Size(258, 341);
-            this.groupViewPanel.TabIndex = 5;
-            this.groupViewPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.groupViewPanel_Paint_1);
-            // 
-            // yourgroupslabel
-            // 
-            this.yourgroupslabel.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.yourgroupslabel.BackColor = System.Drawing.Color.Transparent;
-            this.yourgroupslabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
-            this.yourgroupslabel.ForeColor = System.Drawing.SystemColors.Control;
-            this.yourgroupslabel.Location = new System.Drawing.Point(3, 0);
-            this.yourgroupslabel.Name = "yourgroupslabel";
-            this.yourgroupslabel.Size = new System.Drawing.Size(250, 29);
-            this.yourgroupslabel.TabIndex = 0;
-            this.yourgroupslabel.Text = "Tus grupos";
-            this.yourgroupslabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // creategroupbutton
-            // 
-            this.creategroupbutton.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.creategroupbutton.BackColor = System.Drawing.Color.Transparent;
-            this.creategroupbutton.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
-            this.creategroupbutton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(0)))));
-            this.creategroupbutton.Location = new System.Drawing.Point(3, 33);
-            this.creategroupbutton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.creategroupbutton.Name = "creategroupbutton";
-            this.creategroupbutton.Size = new System.Drawing.Size(250, 40);
-            this.creategroupbutton.TabIndex = 0;
-            this.creategroupbutton.Text = "+ Crear grupo";
-            this.creategroupbutton.UseVisualStyleBackColor = false;
-            this.creategroupbutton.Click += new System.EventHandler(this.creategroupbutton_Click);
-            // 
-            // groupslabel
-            // 
-            this.groupslabel.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.groupslabel.BackColor = System.Drawing.Color.Transparent;
-            this.groupslabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
-            this.groupslabel.ForeColor = System.Drawing.SystemColors.Control;
-            this.groupslabel.Location = new System.Drawing.Point(3, 77);
-            this.groupslabel.Name = "groupslabel";
-            this.groupslabel.Size = new System.Drawing.Size(250, 29);
-            this.groupslabel.TabIndex = 1;
-            this.groupslabel.Text = "Grupos";
-            this.groupslabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.groupslabel.Click += new System.EventHandler(this.groupslabel_Click);
-            // 
             // freezescreenpanel
             // 
             this.freezescreenpanel.BackColor = System.Drawing.Color.Transparent;
@@ -692,14 +692,19 @@
             this.Load += new System.EventHandler(this.Form2_Load);
             this.mainLayout.ResumeLayout(false);
             this.groupLayout.ResumeLayout(false);
+            this.userviewpanel.ResumeLayout(false);
+            this.userviewpanel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.userpicture)).EndInit();
+            this.glassPanel1.ResumeLayout(false);
+            this.groupViewPanel.ResumeLayout(false);
             this.grouplayout2.ResumeLayout(false);
-            this.groupconfigpanel.ResumeLayout(false);
-            this.groupconfigpanel.PerformLayout();
             this.chatLayout.ResumeLayout(false);
             this.sendmsgpanel.ResumeLayout(false);
             this.sendmsgpanel.PerformLayout();
             this.auxchatpanel.ResumeLayout(false);
             this.chatTitlePanel.ResumeLayout(false);
+            this.groupconfigpanel.ResumeLayout(false);
+            this.groupconfigpanel.PerformLayout();
             this.creategrouppanel.ResumeLayout(false);
             this.creategrouppanel.PerformLayout();
             this.panel1.ResumeLayout(false);
@@ -707,11 +712,6 @@
             this.chooseagrouppanel.ResumeLayout(false);
             this.chooseagrouppanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-            this.userviewpanel.ResumeLayout(false);
-            this.userviewpanel.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.userpicture)).EndInit();
-            this.glassPanel1.ResumeLayout(false);
-            this.groupViewPanel.ResumeLayout(false);
             this.confirmationpanel.ResumeLayout(false);
             this.confirmationpanel.PerformLayout();
             this.ResumeLayout(false);

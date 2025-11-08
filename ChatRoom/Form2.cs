@@ -295,8 +295,7 @@ namespace ChatRoom
             {
                 
                 string respuesta = cliente.EnviarEliminarGrupo(idSala, userid);
-                MessageBox.Show($"Respuesta del servidor: {respuesta}");
-
+                
                 if (respuesta.Contains("DELETE_EXITOSO"))
                 {
                     foreach (Control ctrl in groupViewPanel.Controls)
@@ -336,7 +335,31 @@ namespace ChatRoom
         {
             //AddNewMessage("Alexis", tempmsgtextbox.Text, tempusercheck.Checked ? true : false);
             //IMPORTANT -+-+-+-+-+-+-*_*_*_*_*_+-+-+-+-+_*_*_*_*_*-+-+-+-+_**_*_*-+
-            //MandarMensajeBD(tempmsgtextbox.Text);
+            string mensaje = tempmsgtextbox.Text.Trim();
+            if (string.IsNullOrEmpty(mensaje) || salaid == 0) return;
+
+            try
+            {
+                ClientSocket clienteTemporal = new ClientSocket();
+                string respuesta = clienteTemporal.EnviarMensajeNuevo(salaid, userid, mensaje);
+
+                if (respuesta.Contains("MESSAGE_SENT|"))
+                {
+                    string mensajeLimpio = respuesta.Replace("<EOF>", "");
+                    string[] partes = mensajeLimpio.Split('|');
+                    string mensajeEmoji = partes[1];
+                    AddNewMessage(usernamelabel.Text, mensajeEmoji, true);
+                    tempmsgtextbox.Clear();
+                }
+                else
+                {
+                    MessageBox.Show("Error al enviar mensaje");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}");
+            }
         }
         private void confirmcancel_Click(object sender, EventArgs e)
         {
@@ -474,9 +497,10 @@ namespace ChatRoom
         }
 
 
+
         private void AddNewMessage(string username, string message, bool usergroup)
         {
-            string convertedMessage = EmojiHelper.ConvertEmojis(message);
+            //string convertedMessage = EmojiHelper.ConvertEmojis(message);
 
             // Main message panel
             Panel panel = new Panel();

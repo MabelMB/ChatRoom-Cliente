@@ -140,6 +140,18 @@ namespace ChatRoom
                 return respuesta;
             }
 
+            public string EnviarMensajeNuevo(int salaid, int userid, string mensaje)
+            {
+                if (socket == null || !socket.Connected)
+                {
+                    Conectar();
+                }
+
+                string eventoRegistro = $"SEND_MESSAGE|{salaid}|{userid}|{mensaje}";
+                string respuesta = Client(eventoRegistro);
+                return respuesta;
+            }
+
         }
 
 
