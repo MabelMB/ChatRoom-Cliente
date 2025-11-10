@@ -32,7 +32,12 @@ namespace ChatRoom
         int currentuserid;
         int currentsalaid;
         int salaid;
-       
+
+        private System.Windows.Forms.Timer timerActualizacion;
+        private int salaActual = 0;
+        private bool escuchandoMensajes = false;
+        private Socket socketEscucha;
+
 
         //CONSTRUCTOR -----------------------------------------------------------
         public Form2(STARTMENU mainForm, STARTMENU.ClientSocket clienteExistente, int userId, string userName, string gruposData)
@@ -50,7 +55,137 @@ namespace ChatRoom
                 MuestraGrupos(userId, gruposData);
                 userid = userId;
             }
-            
+            InicializarConexionTiempoReal();
+            timerActualizacion.Start();
+        }
+
+        //conexiones pa los usuarios
+        private void InicializarConexionTiempoReal()
+        {
+            // Timer para verificar mensajes nuevos
+            timerActualizacion = new System.Windows.Forms.Timer();
+            timerActualizacion.Interval = 1000; // 1 segundo
+            timerActualizacion.Tick += TimerActualizacion_Tick;
+        }
+
+        private async void TimerActualizacion_Tick(object sender, EventArgs e)
+        {
+            if (salaActual == 0) return;
+
+            try
+            {
+                await VerificarMensajesNuevos();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] Error en timer: {ex.Message}");
+            }
+        }
+
+        private async Task VerificarMensajesNuevos()
+        {
+            if (salaActual == 0) return;
+
+            try
+            {
+                using (Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+                {
+                    // Timeout más corto para mejor respuesta
+                    clientSocket.SendTimeout = 1000;
+                    clientSocket.ReceiveTimeout = 1000;
+
+                    await Task.Run(() => clientSocket.Connect("127.0.0.1", 11200));
+
+                    string solicitud = $"GET_NEW_MESSAGES|{salaActual}<EOF>";
+                    byte[] requestBytes = Encoding.UTF8.GetBytes(solicitud);
+
+                    await Task.Run(() => clientSocket.Send(requestBytes));
+
+                    // Recibir respuesta
+                    byte[] buffer = new byte[4096];
+                    StringBuilder responseBuilder = new StringBuilder();
+
+                    int bytesRec;
+                    while ((bytesRec = await Task.Run(() => clientSocket.Receive(buffer))) > 0)
+                    {
+                        responseBuilder.Append(Encoding.UTF8.GetString(buffer, 0, bytesRec));
+                        if (responseBuilder.ToString().Contains("<EOF>"))
+                            break;
+                    }
+
+                    string respuesta = responseBuilder.ToString();
+
+                    if (respuesta.Contains("NEW_MESSAGES|"))
+                    {
+                        this.Invoke(new Action(() => ProcesarMensajesNuevos(respuesta)));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Silenciar errores de timeout para no saturar la consola
+                if (!ex.Message.Contains("timed out"))
+                    Console.WriteLine($"[DEBUG] Error verificando mensajes: {ex.Message}");
+            }
+        }
+        private void ProcesarMensajesNuevos(string data)
+        {
+            if (data.StartsWith("NEW_MESSAGES|"))
+            {
+                string contenido = data.Replace("NEW_MESSAGES|", "").Replace("<EOF>", "");
+                string[] mensajes = contenido.Split(';');
+
+                foreach (string mensaje in mensajes)
+                {
+                    if (!string.IsNullOrEmpty(mensaje))
+                    {
+                        string[] partes = mensaje.Split(':');
+                        if (partes.Length >= 4)
+                        {
+                            string usuario = partes[1];
+                            string texto = partes[2];
+                            bool esPropio = usuario == usernamelabel.Text;
+
+                            // Verificar si el mensaje ya existe para evitar duplicados
+                            if (!MensajeYaExiste(usuario, texto))
+                            {
+                                AddNewMessage(usuario, texto, esPropio);
+                            }
+                        }
+                    }
+                }
+
+                // Asegurar que el scroll esté al final después de agregar nuevos mensajes
+                if (chatviewpanel.Controls.Count > 0)
+                {
+                    chatviewpanel.ScrollControlIntoView(chatviewpanel.Controls[chatviewpanel.Controls.Count - 1]);
+                }
+            }
+        }
+
+        private bool MensajeYaExiste(string usuario, string texto)
+        {
+            // Verificación simple para evitar mensajes duplicados
+            foreach (Control control in chatviewpanel.Controls)
+            {
+                if (control is Panel panel)
+                {
+                    foreach (Control subControl in panel.Controls)
+                    {
+                        if (subControl is FlowLayoutPanel layout)
+                        {
+                            foreach (Control label in layout.Controls)
+                            {
+                                if (label is Label lbl && lbl.Text.Contains(texto))
+                                {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
         }
 
         //DISEÑO -----------------------------------------------------------
@@ -246,8 +381,8 @@ namespace ChatRoom
             int id = (int)p.Tag;
             currentuserid = id;
             salaid = (int)p.Tag;
+            salaActual = id; // ¡IMPORTANTE! Actualizar la sala actual
 
-            //grouptitlepanel.Text = label.Text;
             foreach (Control control in p.Controls)
             {
                 if (control is Label label)
@@ -255,22 +390,23 @@ namespace ChatRoom
                     if (!label.Text.Contains("id:"))
                     {
                         groputitlelabel.Text = label.Text;
-
                         break;
                     }
-                    
                 }
             }
 
-            //IMPORTANT -+-+-+-+-+-+-*_*_*_*_*_+-+-+-+-+_*_*_*_*_*-+-+-+-+_**_*_*-+
             cargaMensajes(id);
             muestraMiembros(id);
-            
+
             chatLayout.Visible = true;
             chatLayout.BringToFront();
             chooseagroup.Visible = false;
             groupconfigpanel.Visible = false;
             creategrouppanel.Visible = false;
+
+            // Reiniciar el timer cuando cambias de sala
+            timerActualizacion?.Stop();
+            timerActualizacion?.Start();
         }
 
         //Buttons ********
@@ -500,19 +636,16 @@ namespace ChatRoom
 
         private void AddNewMessage(string username, string message, bool usergroup)
         {
-            //string convertedMessage = EmojiHelper.ConvertEmojis(message);
-
             // Main message panel
             Panel panel = new Panel();
             panel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             panel.Width = chatviewpanel.ClientSize.Width - SystemInformation.VerticalScrollBarWidth;
-            panel.Anchor = AnchorStyles.Left;
-            panel.BackColor = Color.LightGray;
+            panel.Anchor = AnchorStyles.Left | AnchorStyles.Right; // Cambio importante
+            panel.BackColor = usergroup ? Color.LightBlue : Color.LightGray; // Para distinguir mensajes propios
             panel.Padding = new Padding(4);
             panel.MaximumSize = new Size(chatviewpanel.ClientSize.Width - SystemInformation.VerticalScrollBarWidth, 0);
-            panel.Dock = DockStyle.None;
+            panel.Dock = DockStyle.Top; // Cambio crucial - esto asegura el orden correcto
             panel.AutoSize = true;
-
 
             // Flow layout for horizontal alignment
             FlowLayoutPanel layout = new FlowLayoutPanel();
@@ -524,10 +657,9 @@ namespace ChatRoom
             layout.Padding = new Padding(0);
             layout.Margin = new Padding(0);
 
-
             // Profile image
             PictureBox profilePic = new PictureBox();
-            profilePic.Image = usergroup? Properties.Resources.image_removebg_preview__2_ : Properties.Resources.image_removebg_preview__1_;
+            profilePic.Image = usergroup ? Properties.Resources.image_removebg_preview__2_ : Properties.Resources.image_removebg_preview__1_;
             profilePic.SizeMode = PictureBoxSizeMode.Zoom;
             profilePic.Size = new Size(23, 23);
             profilePic.Margin = new Padding(0, 0, 4, 0);
@@ -551,13 +683,23 @@ namespace ChatRoom
 
             panel.Controls.Add(layout);
 
-            // Add to chat view
-            chatviewpanel.Controls.Add(panel);
             
-            chatviewpanel.PerformLayout();
+            chatviewpanel.SuspendLayout(); // Pausar el layout temporalmente
 
+            // Agregar al FINAL de los controles
+            chatviewpanel.Controls.Add(panel);
+
+            // Forzar que el nuevo panel esté al final
+            chatviewpanel.Controls.SetChildIndex(panel, chatviewpanel.Controls.Count - 1);
+
+            chatviewpanel.ResumeLayout(); // Reanudar el layout
+
+            // Scroll al final
             chatviewpanel.ScrollControlIntoView(panel);
-            chatviewpanel.VerticalScroll.Value = chatviewpanel.VerticalScroll.Maximum;
+
+            // Esto asegura que el scroll se mantenga al final
+            Application.DoEvents(); // Procesar eventos pendientes
+            //chatviewpanel.VerticalScroll.Value = chatviewpanel.VerticalScroll.Maximum;
         }
 
         private Control CrearControlConMenciones(string texto, bool esUsuarioActual, int salaId)
@@ -660,6 +802,7 @@ namespace ChatRoom
             {
                 chatviewpanel.Controls.Clear();
 
+                timerActualizacion?.Stop();
                 // Mostrar mensaje de carga
                 Label loadingLabel = new Label();
                 loadingLabel.Text = "Cargando mensajes...";
@@ -667,11 +810,19 @@ namespace ChatRoom
                 chatviewpanel.Controls.Add(loadingLabel);
 
                 await Task.Run(() => CargarMensajesAsync(salaid));
+                timerActualizacion?.Start();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error: {ex.Message}");
             }
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            timerActualizacion?.Stop();
+            timerActualizacion?.Dispose();
+            base.OnFormClosing(e);
         }
 
         private void CargarMensajesAsync(int salaid)
