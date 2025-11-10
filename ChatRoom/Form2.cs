@@ -94,7 +94,7 @@ namespace ChatRoom
                     clientSocket.SendTimeout = 1000;
                     clientSocket.ReceiveTimeout = 1000;
 
-                    await Task.Run(() => clientSocket.Connect("127.0.0.1", 11200));
+                    await Task.Run(() => clientSocket.Connect("172.17.106.111", 11200));
 
                     string solicitud = $"GET_NEW_MESSAGES|{salaActual}<EOF>";
                     byte[] requestBytes = Encoding.UTF8.GetBytes(solicitud);
@@ -411,6 +411,7 @@ namespace ChatRoom
 
         //Buttons ********
 
+
         private void creategroupbutton_Click(object sender, EventArgs e)
         {
             chatLayout.Visible = false;
@@ -569,7 +570,7 @@ namespace ChatRoom
                     clientSocket.SendTimeout = 5000;
                     clientSocket.ReceiveTimeout = 5000;
 
-                    clientSocket.Connect("127.0.0.1", 11200);
+                    clientSocket.Connect("172.17.106.111", 11200);
 
                     // SOLICITUD DE MIEMBROS
                     string solicitud = $"GET_MEMBERS|{salaid}<EOF>";
@@ -698,7 +699,7 @@ namespace ChatRoom
             chatviewpanel.ScrollControlIntoView(panel);
 
             // Esto asegura que el scroll se mantenga al final
-            Application.DoEvents(); // Procesar eventos pendientes
+            //Application.DoEvents(); // Procesar eventos pendientes
             //chatviewpanel.VerticalScroll.Value = chatviewpanel.VerticalScroll.Maximum;
         }
 
@@ -835,7 +836,7 @@ namespace ChatRoom
                     clientSocket.SendTimeout = 5000;
                     clientSocket.ReceiveTimeout = 5000;
 
-                    clientSocket.Connect("127.0.0.1", 11200);
+                    clientSocket.Connect("172.17.106.111", 11200);
 
                     string solicitud = $"GET_RECENT_MESSAGES|{salaid}<EOF>";
                     byte[] requestBytes = Encoding.UTF8.GetBytes(solicitud);
@@ -1105,6 +1106,16 @@ namespace ChatRoom
                         //agregaMiembroLista(usuarioLimpio, currentsalaid, "miembro");
                     }
                 }
+            }
+        }
+
+        private void tempmsgtextbox_KeyDown(object sender, KeyEventArgs e)
+        {
+            //Enviar mensaje al presionar Enter
+            if (e.KeyCode == Keys.Enter && !e.Shift)
+            {
+                e.SuppressKeyPress = true;
+                tempaddchatmsg_Click(sender, e);
             }
         }
     }
