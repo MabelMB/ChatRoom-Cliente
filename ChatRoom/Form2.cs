@@ -32,6 +32,7 @@ namespace ChatRoom
         int currentuserid;
         int currentsalaid;
         int salaid;
+        string nombreusuario;
 
         private System.Windows.Forms.Timer timerActualizacion;
         private int salaActual = 0;
@@ -48,6 +49,7 @@ namespace ChatRoom
             //form management
             _mainForm = mainForm;
             cliente = clienteExistente;
+            nombreusuario = userName;
             //user data load
             if (userName != "null")
             {
@@ -57,6 +59,8 @@ namespace ChatRoom
             }
             InicializarConexionTiempoReal();
             timerActualizacion.Start();
+            Task.Run(() => EscucharNotificaciones());
+            Task.Run(() => IniciarVerificacionPeriodica());
         }
 
         //conexiones pa los usuarios
@@ -82,6 +86,19 @@ namespace ChatRoom
             }
         }
 
+        private async void IniciarVerificacionPeriodica()
+        {
+            while (true)
+            {
+                if (salaid != 0)
+                {
+                    await VerificarMensajesNuevos();
+                }
+                await Task.Delay(2000);
+            }
+        }
+
+
         private async Task VerificarMensajesNuevos()
         {
             if (salaActual == 0) return;
@@ -94,7 +111,7 @@ namespace ChatRoom
                     clientSocket.SendTimeout = 1000;
                     clientSocket.ReceiveTimeout = 1000;
 
-                    await Task.Run(() => clientSocket.Connect("172.17.106.111", 11200));
+                    await Task.Run(() => clientSocket.Connect("127.0.0.1", 11200));
 
                     string solicitud = $"GET_NEW_MESSAGES|{salaActual}<EOF>";
                     byte[] requestBytes = Encoding.UTF8.GetBytes(solicitud);
@@ -183,6 +200,108 @@ namespace ChatRoom
                             }
                         }
                     }
+                }
+            }
+            return false;
+        }
+        private async void NotificarCambioDeSala(int salaId)
+        {
+            try
+            {
+                using (Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+                {
+                    await Task.Run(() => clientSocket.Connect("127.0.0.1", 11200));
+
+                    string notificacion = $"CHANGE_ROOM|{userid}|{salaId}<EOF>";
+                    byte[] requestBytes = Encoding.UTF8.GetBytes(notificacion);
+                    await Task.Run(() => clientSocket.Send(requestBytes));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] Error notificando cambio de sala: {ex.Message}");
+            }
+        }
+        private async void EscucharNotificaciones()
+        {
+            while (true)
+            {
+                try
+                {
+                    using (Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+                    {
+                        await Task.Run(() => clientSocket.Connect("127.0.0.1", 11200));
+
+                        // Mantener conexión abierta para recibir notificaciones push
+                        byte[] buffer = new byte[4096];
+
+                        while (clientSocket.Connected)
+                        {
+                            int bytesRec = await Task.Run(() => clientSocket.Receive(buffer));
+                            if (bytesRec > 0)
+                            {
+                                string notificacion = Encoding.UTF8.GetString(buffer, 0, bytesRec);
+
+                                this.Invoke(new Action(() =>
+                                {
+                                    if (notificacion.Contains("NEW_GROUP|"))
+                                    {
+                                        ProcesarNuevoGrupo(notificacion);
+                                    }
+                                    else if (notificacion.Contains("NEW_MESSAGE|"))
+                                    {
+                                        ProcesarMensajesNuevos(notificacion);
+                                    }
+                                }));
+                            }
+                            await Task.Delay(100);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[NOTIFICACIONES] Error: {ex.Message}");
+                    await Task.Delay(5000);
+                }
+            }
+        }
+
+        private void ProcesarNuevoGrupo(string data)
+        {
+            try
+            {
+                string mensajeLimpio = data.Replace("<EOF>", "");
+                string[] partes = mensajeLimpio.Split('|');
+
+                int salaId = int.Parse(partes[1]);
+                string nombreGrupo = partes[2];
+                string descripcion = partes[3];
+                string miembrosData = partes[4];
+
+                // Verificar si el grupo ya existe para evitar duplicados
+                if (!GrupoYaExiste(salaId))
+                {
+                    AddNewGroup(nombreGrupo, descripcion, salaId, false);
+                    if (salaId == salaActual)
+                    {
+                        groupmemberslabel.Text = miembrosData.Replace(';', ',');
+                    }
+                    MessageBox.Show($"Se creó el grupo: {nombreGrupo}");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error procesando nuevo grupo: {ex.Message}");
+            }
+        }
+
+        private bool GrupoYaExiste(int salaId)
+        {
+            foreach (Control ctrl in groupViewPanel.Controls)
+            {
+                if (ctrl is Panel panel && panel.Tag is int id && id == salaId)
+                {
+                    return true;
                 }
             }
             return false;
@@ -570,7 +689,7 @@ namespace ChatRoom
                     clientSocket.SendTimeout = 5000;
                     clientSocket.ReceiveTimeout = 5000;
 
-                    clientSocket.Connect("172.17.106.111", 11200);
+                    clientSocket.Connect("127.0.0.1", 11200);
 
                     // SOLICITUD DE MIEMBROS
                     string solicitud = $"GET_MEMBERS|{salaid}<EOF>";
@@ -758,7 +877,7 @@ namespace ChatRoom
                 if (parte.StartsWith("@"))
                 {
                     string nombreUsuario = parte.TrimStart('@');
-                    bool usuarioExiste = UsuarioExisteEnGrupo(nombreUsuario, salaId);
+                    bool usuarioExiste = true;
 
                     Label lblMencion = new Label();
                     lblMencion.Text = parte;
@@ -836,7 +955,7 @@ namespace ChatRoom
                     clientSocket.SendTimeout = 5000;
                     clientSocket.ReceiveTimeout = 5000;
 
-                    clientSocket.Connect("172.17.106.111", 11200);
+                    clientSocket.Connect("127.0.0.1", 11200);
 
                     string solicitud = $"GET_RECENT_MESSAGES|{salaid}<EOF>";
                     byte[] requestBytes = Encoding.UTF8.GetBytes(solicitud);
@@ -890,9 +1009,10 @@ namespace ChatRoom
                 }
 
                 string[] mensajes = contenido.Split(';');
-
-                foreach (string mensaje in mensajes)
+                string mensaje = "";
+                for(int i = mensajes.Length - 1; i >= 0; i--)
                 {
+                    mensaje = mensajes[i];
                     if (!string.IsNullOrEmpty(mensaje))
                     {
                         string[] partes = mensaje.Split(':');
@@ -900,7 +1020,7 @@ namespace ChatRoom
                         {
                             string usuario = partes[1];
                             string texto = partes[2];
-                            bool esPropio = usuario == usernamelabel.Text;
+                            bool esPropio = usuario == nombreusuario;
                             AddNewMessage(usuario, texto, esPropio);
                         }
                     }
@@ -912,66 +1032,6 @@ namespace ChatRoom
                 chatviewpanel.Controls.Add(errorLabel);
             }
         }
-
-
-        //private void MandarMensajeBD(string mensaje)
-        //{
-        //    if (string.IsNullOrWhiteSpace(mensaje) || currentuserid == 0)
-        //        return;
-
-        //    try
-        //    {
-        //        using (MySqlConnection conn = new MySqlConnection(connection))
-        //        {
-        //            conn.Open();
-        //            string query = "INSERT INTO mensajes (id_usuario, id_sala, mensajes, fecha_envio) VALUES (@usuario, @sala, @mensaje, @fecha)";
-        //            using (MySqlCommand cmd = new MySqlCommand(query, conn))
-        //            {
-        //                cmd.Parameters.AddWithValue("@usuario", userid);
-        //                cmd.Parameters.AddWithValue("@sala", currentuserid);
-        //                cmd.Parameters.AddWithValue("@mensaje", mensaje);
-        //                cmd.Parameters.AddWithValue("@fecha", DateTime.Now);
-        //                cmd.ExecuteNonQuery();
-        //            }
-        //        }
-
-        //        string mensajeConEmojis = EmojiHelper.ConvertEmojis(mensaje);
-        //        AddNewMessage(usernamelabel.Text, mensajeConEmojis, true);
-
-        //        tempmsgtextbox.Clear();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        MessageBox.Show("Error al enviar el mensaje: " + ex.Message);
-        //    }
-        //}
-        private bool UsuarioExisteEnGrupo(string nombreUsuario, int salaId)
-        {
-            try
-            {
-                using (MySqlConnection conn = new MySqlConnection(connection))
-                {
-                    conn.Open();
-                    string query = @"
-                SELECT COUNT(*) 
-                FROM miembros_sala ms 
-                INNER JOIN usuarios u ON ms.id_usuario = u.id_usuario 
-                WHERE u.nombre_usuario = @usuario AND ms.id_sala = @sala";
-
-                    MySqlCommand cmd = new MySqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@usuario", nombreUsuario.TrimStart('@'));
-                    cmd.Parameters.AddWithValue("@sala", salaId);
-
-                    int count = Convert.ToInt32(cmd.ExecuteScalar());
-                    return count > 0;
-                }
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
 
 
         //IMPLEMENTACION DE EMOJIS -----------------------------------------------------------

@@ -63,7 +63,7 @@ namespace ChatRoom
             public void Conectar()
             {
 
-                IPAddress ipAddress = IPAddress.Parse("172.17.106.111");
+                IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
                 IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11200);
 
                 try
@@ -255,13 +255,6 @@ namespace ChatRoom
         //iniciar sesion
         private void loginuserbutton_Click(object sender, EventArgs e)
         {
-            //if (userlogin.Text == "123" && passwordlogin.Text == "123")
-            //{
-            //    Form2 f = new Form2(this, 12345, "null");
-            //    f.Show();
-            //    this.Hide();
-            //    return;
-            //}
 
             //Validación del usuario y su contraseña
             if (string.IsNullOrEmpty(userlogin.Text) || userlogin.Text == "Usuario" ||
@@ -339,11 +332,11 @@ namespace ChatRoom
 
             if (respuestaServidor.Contains("REGISTER_EXITOSO"))
             {
-                MessageBox.Show("✅ Usuario registrado con éxito");
+                MessageBox.Show("Usuario registrado con éxito");
             }
             else if (respuestaServidor.Contains("REGISTER_ERROR"))
             {
-                MessageBox.Show("❌ No se pudo registrar. El usuario puede existir o hubo un error");
+                MessageBox.Show("No se pudo registrar. El usuario puede existir o hubo un error");
             }
 
             // Reset de los campos
