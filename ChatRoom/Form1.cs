@@ -152,6 +152,18 @@ namespace ChatRoom
                 return respuesta;
             }
 
+            public string EnviarExisteUsuario(string username, int salaid)
+            {
+                if (socket == null || !socket.Connected)
+                {
+                    Conectar();
+                }
+
+                string eventoRegistro = $"SEND_EXIST|{username}|{salaid}";
+                string respuesta = Client(eventoRegistro);
+                return respuesta;
+            }
+        
         }
 
 

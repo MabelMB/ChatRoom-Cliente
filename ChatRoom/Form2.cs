@@ -58,9 +58,9 @@ namespace ChatRoom
                 userid = userId;
             }
             InicializarConexionTiempoReal();
-            timerActualizacion.Start();
+            //timerActualizacion.Start();
             Task.Run(() => EscucharNotificaciones());
-            Task.Run(() => IniciarVerificacionPeriodica());
+            //Task.Run(() => IniciarVerificacionPeriodica());
         }
 
         //conexiones pa los usuarios
@@ -877,7 +877,14 @@ namespace ChatRoom
                 if (parte.StartsWith("@"))
                 {
                     string nombreUsuario = parte.TrimStart('@');
-                    bool usuarioExiste = true;
+                    ClientSocket clienteTemporal = new ClientSocket();
+                    string respuesta = clienteTemporal.EnviarExisteUsuario(nombreusuario, salaid);
+                    bool usuarioExiste = false;
+
+                    if (respuesta.Contains("USER_EXISTS|true"))
+                    {
+                        usuarioExiste = true;
+                    }
 
                     Label lblMencion = new Label();
                     lblMencion.Text = parte;
