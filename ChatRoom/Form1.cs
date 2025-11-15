@@ -159,7 +159,7 @@ namespace ChatRoom
                     Conectar();
                 }
 
-                string eventoRegistro = $"SEND_EXIST|{username}|{salaid}";
+                string eventoRegistro = $"SEND_EXISTS|{username}|{salaid}";
                 string respuesta = Client(eventoRegistro);
                 return respuesta;
             }

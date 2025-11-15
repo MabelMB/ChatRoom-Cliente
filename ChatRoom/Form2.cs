@@ -182,9 +182,13 @@ namespace ChatRoom
 
         private bool MensajeYaExiste(string usuario, string texto)
         {
-            // Verificación simple para evitar mensajes duplicados
+            string hashMensaje = $"{usuario}_{texto.GetHashCode()}";
+
             foreach (Control control in chatviewpanel.Controls)
             {
+                if (control.Tag != null && control.Tag.ToString() == hashMensaje)
+                    return true;
+
                 if (control is Panel panel)
                 {
                     foreach (Control subControl in panel.Controls)
@@ -195,6 +199,7 @@ namespace ChatRoom
                             {
                                 if (label is Label lbl && lbl.Text.Contains(texto))
                                 {
+                                    panel.Tag = hashMensaje;
                                     return true;
                                 }
                             }
@@ -204,24 +209,7 @@ namespace ChatRoom
             }
             return false;
         }
-        private async void NotificarCambioDeSala(int salaId)
-        {
-            try
-            {
-                using (Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
-                {
-                    await Task.Run(() => clientSocket.Connect("127.0.0.1", 11200));
 
-                    string notificacion = $"CHANGE_ROOM|{userid}|{salaId}<EOF>";
-                    byte[] requestBytes = Encoding.UTF8.GetBytes(notificacion);
-                    await Task.Run(() => clientSocket.Send(requestBytes));
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[DEBUG] Error notificando cambio de sala: {ex.Message}");
-            }
-        }
         private async void EscucharNotificaciones()
         {
             while (true)
@@ -232,7 +220,10 @@ namespace ChatRoom
                     {
                         await Task.Run(() => clientSocket.Connect("127.0.0.1", 11200));
 
-                        // Mantener conexión abierta para recibir notificaciones push
+                        string identificacion = $"LISTEN_NOTIFICATIONS|{userid}<EOF>";
+                        byte[] idBytes = Encoding.UTF8.GetBytes(identificacion);
+                        await Task.Run(() => clientSocket.Send(idBytes));
+
                         byte[] buffer = new byte[4096];
 
                         while (clientSocket.Connected)
@@ -242,17 +233,28 @@ namespace ChatRoom
                             {
                                 string notificacion = Encoding.UTF8.GetString(buffer, 0, bytesRec);
 
-                                this.Invoke(new Action(() =>
+                                if (notificacion.Contains($"NEW_MESSAGE|{salaActual}") ||
+                                    notificacion.Contains("NEW_GROUP|"))
                                 {
-                                    if (notificacion.Contains("NEW_GROUP|"))
+                                    this.Invoke(new Action(() =>
                                     {
-                                        ProcesarNuevoGrupo(notificacion);
-                                    }
-                                    else if (notificacion.Contains("NEW_MESSAGE|"))
-                                    {
-                                        ProcesarMensajesNuevos(notificacion);
-                                    }
-                                }));
+                                        if (notificacion.Contains("NEW_GROUP|"))
+                                        {
+                                            ProcesarNuevoGrupo(notificacion);
+                                        }
+                                        else if (notificacion.Contains("NEW_MESSAGE|"))
+                                        {
+                                            string[] partes = notificacion.Split('|');
+                                            if (partes.Length > 1 && int.TryParse(partes[1], out int salaNotificacion))
+                                            {
+                                                if (salaNotificacion == salaActual)
+                                                {
+                                                    ProcesarMensajeNotificacion(notificacion);
+                                                }
+                                            }
+                                        }
+                                    }));
+                                }
                             }
                             await Task.Delay(100);
                         }
@@ -266,6 +268,35 @@ namespace ChatRoom
             }
         }
 
+        private void ProcesarMensajeNotificacion(string data)
+        {
+            try
+            {
+                if (data.StartsWith("NEW_MESSAGE|"))
+                {
+                    string contenido = data.Replace("NEW_MESSAGE|", "").Replace("<EOF>", "");
+                    string[] partes = contenido.Split('|');
+
+                    if (partes.Length >= 4)
+                    {
+                        int salaId = int.Parse(partes[0]);
+                        string usuario = partes[1];
+                        string texto = partes[2];
+                        bool esPropio = usuario == nombreusuario;
+
+                        // Verificar duplicado más estricto
+                        if (!MensajeYaExiste(usuario, texto))
+                        {
+                            AddNewMessage(usuario, texto, esPropio);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] Error procesando notificación: {ex.Message}");
+            }
+        }
         private void ProcesarNuevoGrupo(string data)
         {
             try
@@ -596,6 +627,7 @@ namespace ChatRoom
 
             try
             {
+                //string mensajeConEmojis = EmojiHelper.ConvertEmojis(mensaje);
                 ClientSocket clienteTemporal = new ClientSocket();
                 string respuesta = clienteTemporal.EnviarMensajeNuevo(salaid, userid, mensaje);
 
@@ -604,6 +636,7 @@ namespace ChatRoom
                     string mensajeLimpio = respuesta.Replace("<EOF>", "");
                     string[] partes = mensajeLimpio.Split('|');
                     string mensajeEmoji = partes[1];
+                    //MessageBox.Show(mensajeEmoji);
                     AddNewMessage(usernamelabel.Text, mensajeEmoji, true);
                     tempmsgtextbox.Clear();
                 }
@@ -756,6 +789,11 @@ namespace ChatRoom
 
         private void AddNewMessage(string username, string message, bool usergroup)
         {
+            if(MensajeYaExiste(username, message))
+                return;
+
+            //MessageBox.Show(message);
+
             // Main message panel
             Panel panel = new Panel();
             panel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
@@ -787,7 +825,7 @@ namespace ChatRoom
             // Username label
             Label usernameLabel = new Label();
             usernameLabel.Text = usergroup ? username + " (Tú)" : username;
-            usernameLabel.Font = new Font("Myriad Apple", 9, FontStyle.Bold);
+            usernameLabel.Font = new Font("Segoe UI Emoji", 9, FontStyle.Bold);
             usernameLabel.ForeColor = usergroup ? Color.Blue : Color.Black;
             usernameLabel.AutoSize = true;
             usernameLabel.Margin = new Padding(0, 3, 4, 0);
@@ -816,6 +854,8 @@ namespace ChatRoom
 
             // Scroll al final
             chatviewpanel.ScrollControlIntoView(panel);
+            string hashMensaje = $"{username}_{message.GetHashCode()}";
+            panel.Tag = hashMensaje;
 
             // Esto asegura que el scroll se mantenga al final
             //Application.DoEvents(); // Procesar eventos pendientes
@@ -872,54 +912,70 @@ namespace ChatRoom
             panelContenedor.MaximumSize = new Size(chatviewpanel.ClientSize.Width / 2, 0);
             panelContenedor.Margin = new Padding(0, 8, 0, 0);
 
-            foreach (string parte in partes)
+            // Usar Task.Run para evitar bloqueos y no crear conexiones duplicadas
+            Task.Run(async () =>
             {
-                if (parte.StartsWith("@"))
+                foreach (string parte in partes)
                 {
-                    string nombreUsuario = parte.TrimStart('@');
-                    ClientSocket clienteTemporal = new ClientSocket();
-                    string respuesta = clienteTemporal.EnviarExisteUsuario(nombreusuario, salaid);
-                    bool usuarioExiste = false;
-
-                    if (respuesta.Contains("USER_EXISTS|true"))
+                    if (parte.StartsWith("@"))
                     {
-                        usuarioExiste = true;
-                    }
+                        string nombreUsuario = parte.TrimStart('@');
+                        bool usuarioExiste = await VerificarUsuarioExistente(nombreUsuario, salaId);
 
-                    Label lblMencion = new Label();
-                    lblMencion.Text = parte;
+                        this.Invoke(new Action(() =>
+                        {
+                            Label lblMencion = new Label();
+                            lblMencion.Text = parte;
 
-                    if (usuarioExiste)
-                    {
-                        lblMencion.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-                        lblMencion.ForeColor = Color.DarkBlue;
-                        lblMencion.BackColor = Color.LightYellow;
+                            if (usuarioExiste)
+                            {
+                                lblMencion.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                                lblMencion.ForeColor = Color.DarkBlue;
+                                lblMencion.BackColor = Color.LightYellow;
+                            }
+                            else
+                            {
+                                lblMencion.Font = new Font("Segoe UI", 9);
+                                lblMencion.ForeColor = Color.Gray;
+                                lblMencion.BackColor = Color.LightGray;
+                            }
+
+                            lblMencion.AutoSize = true;
+                            lblMencion.Padding = new Padding(2, 1, 2, 1);
+                            lblMencion.Margin = new Padding(0, 0, 2, 0);
+                            panelContenedor.Controls.Add(lblMencion);
+                        }));
                     }
                     else
                     {
-                        lblMencion.Font = new Font("Segoe UI", 9);
-                        lblMencion.ForeColor = Color.Gray;
-                        lblMencion.BackColor = Color.LightGray;
+                        this.Invoke(new Action(() =>
+                        {
+                            Label lblNormal = new Label();
+                            lblNormal.Text = parte;
+                            lblNormal.Font = new Font("Segoe UI", 9);
+                            lblNormal.ForeColor = Color.Black;
+                            lblNormal.AutoSize = true;
+                            lblNormal.Margin = new Padding(0);
+                            panelContenedor.Controls.Add(lblNormal);
+                        }));
                     }
-
-                    lblMencion.AutoSize = true;
-                    lblMencion.Padding = new Padding(2, 1, 2, 1);
-                    lblMencion.Margin = new Padding(0, 0, 2, 0);
-                    panelContenedor.Controls.Add(lblMencion);
                 }
-                else
-                {
-                    Label lblNormal = new Label();
-                    lblNormal.Text = parte;
-                    lblNormal.Font = new Font("Segoe UI", 9);
-                    lblNormal.ForeColor = Color.Black;
-                    lblNormal.AutoSize = true;
-                    lblNormal.Margin = new Padding(0);
-                    panelContenedor.Controls.Add(lblNormal);
-                }
-            }
+            });
 
             return panelContenedor;
+        }
+        private async Task<bool> VerificarUsuarioExistente(string username, int salaId)
+        {
+            try
+            {
+                string respuesta = await Task.Run(() => cliente.EnviarExisteUsuario(username, salaId));
+                return respuesta.Contains("USER_EXISTS|true");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] Error verificando usuario: {ex.Message}");
+                return false;
+            }
         }
 
         //Carga de mensajes
